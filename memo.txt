@@ -1,0 +1,8 @@
+﻿VSCODEでC#7.2が使えないとき
+<PropertyGroup>の子要素に<LangVersion>7.2</LangVersion>を追加します。
+
+PlayerSettingsで
+UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP
+をつけることで、デフォルトのワールドを生成しないようにしている
+
+test
