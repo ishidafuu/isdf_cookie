@@ -16,11 +16,36 @@ namespace NKPB
         Special = 1,
     }
 
+    // public enum EnumPieceMoveType
+    // {
+    //     Stop,
+    //     HoldMove,
+    //     SlipMove,
+    //     // AlignMove,
+    // }
+
+    public enum EnumPieceAlignVec
+    {
+        None,
+        Up,
+        Down,
+        Left,
+        Right
+        // AlignMove,
+    }
     public enum EnumDrawLayer
     {
         Normal,
         FieldLayer,
         PieceLayer,
         GridLayer,
+    }
+
+    public enum EnumFieldInputPhase
+    {
+        None,
+        Hold,
+        Align,
+        FinishAlign,
     }
 }

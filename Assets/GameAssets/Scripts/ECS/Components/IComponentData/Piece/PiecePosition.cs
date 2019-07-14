@@ -6,8 +6,10 @@ namespace NKPB
     public struct PiecePosition : IComponentData
     {
         public Vector2Int position;
-        public Vector2 startPosition;
+        public Vector2Int startPosition;
         public Vector2Int gridPosition;
-        public boolean isMove;
+        // public Vector2Int delta;
+        // public EnumPieceMoveType moveType;
+
     }
 }

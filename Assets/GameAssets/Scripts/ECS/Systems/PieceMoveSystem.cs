@@ -43,6 +43,8 @@ namespace NKPB
                 piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
                 GridSize = Define.Instance.Common.GridSize,
                 GridLineLength = Define.Instance.Common.GridLineLength,
+                // PieceLimitSpeed = Define.Instance.Common.PieceLimitSpeed,
+                BorderSpeed = Define.Instance.Common.BorderSpeed,
             };
 
             inputDeps = moveJob.Schedule(inputDeps);
@@ -60,7 +62,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct PieceMoveJob : IJob
         {
             [ReadOnly]
@@ -69,6 +71,8 @@ namespace NKPB
             public ComponentDataArray<PiecePosition> piecePositions;
             public int GridSize;
             public int GridLineLength;
+            // public int PieceLimitSpeed;
+            public int BorderSpeed;
             int FieldSize;
 
             public void Execute()
@@ -77,33 +81,36 @@ namespace NKPB
                 for (int i = 0; i < fieldInputs.Length; i++)
                 {
                     var fieldInput = fieldInputs[i];
-                    if (fieldInput.isHold)
+                    switch (fieldInput.phase)
                     {
-                        UpdateHold(fieldInput);
-                    }
-                    else
-                    {
-                        UpdateAlignment(fieldInput);
+                        case EnumFieldInputPhase.Align:
+                            // UpdateAlignment(fieldInput);
+                            UpdateHold(fieldInput);
+                            break;
+                        case EnumFieldInputPhase.FinishAlign:
+                            UpdateHold(fieldInput);
+                            UpdateAlignFinish(fieldInput);
+                            break;
+                        case EnumFieldInputPhase.Hold:
+                            UpdateHold(fieldInput);
+                            break;
                     }
                 }
             }
 
             private void UpdateHold(FieldInput fieldInput)
             {
+                // DebugPanel.Log($"fieldInput.distPosition", fieldInput.distPosition.ToString());
                 if (fieldInput.swipeType == EnumSwipeType.Horizontal)
                 {
                     for (int i = 0; i < piecePositions.Length; i++)
                     {
                         var piecePosition = piecePositions[i];
-                        if ((int)piecePosition.gridPosition.y == (int)fieldInput.gridPosition.y)
+                        if (piecePosition.gridPosition.y == fieldInput.gridPosition.y)
                         {
-                            ResetStartPosition(ref piecePosition);
                             int posX = RoundPos(piecePosition.startPosition.x + fieldInput.distPosition.x);
-
-                            piecePosition.position = new Vector2Int(posX, piecePosition.position.y);
-                            piecePosition.gridPosition = ToGridPosition(piecePosition);
-                            piecePosition.isMove = true;
-                            piecePositions[i] = piecePosition;
+                            Vector2Int newPos = new Vector2Int(posX, piecePosition.position.y);
+                            piecePositions[i] = MovePosition(piecePosition, newPos); //, delta);
                         }
                     }
                 }
@@ -112,62 +119,209 @@ namespace NKPB
                     for (int i = 0; i < piecePositions.Length; i++)
                     {
                         var piecePosition = piecePositions[i];
-                        if ((int)piecePosition.gridPosition.x == (int)fieldInput.gridPosition.x)
+                        if (piecePosition.gridPosition.x == fieldInput.gridPosition.x)
                         {
-                            ResetStartPosition(ref piecePosition);
                             int posY = RoundPos(piecePosition.startPosition.y + fieldInput.distPosition.y);
-                            piecePosition.position = new Vector2Int(piecePosition.position.x, posY);
-                            piecePosition.gridPosition = ToGridPosition(piecePosition);
-                            piecePosition.isMove = true;
-                            piecePositions[i] = piecePosition;
+                            Vector2Int newPos = new Vector2Int(piecePosition.position.x, posY);
+                            piecePositions[i] = MovePosition(piecePosition, newPos);
+                            if (piecePosition.gridPosition.x == 2)
+                            {
+                                // DebugPanel.Log($"piecePositions{i}.position grid", piecePositions[i].position.ToString() + " _ " + piecePositions[i].gridPosition.ToString());
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < piecePositions.Length; i++)
+                    {
+                        var piecePosition = piecePositions[i];
+                        piecePosition.startPosition = FromGridPosition(piecePosition.gridPosition);
+                        piecePositions[i] = piecePosition;
+                        if (piecePosition.gridPosition.x == 2)
+                        {
+                            // DebugPanel.Log($"piecePositions{i}.position grid", piecePositions[i].position.ToString() + " _ " + piecePositions[i].gridPosition.ToString());
                         }
                     }
                 }
             }
 
-            private void UpdateAlignment(FieldInput fieldInput)
+            private PiecePosition MovePosition(PiecePosition piecePosition, Vector2Int newPos) //, Vector2Int delta)
+            {
+                // piecePosition.delta = delta;
+                // DebugPanel.Log("delta", delta.ToString());
+                piecePosition.position = newPos;
+                piecePosition.gridPosition = ToGridPosition(piecePosition.position);
+                // piecePosition.moveType = EnumPieceMoveType.HoldMove;
+                return piecePosition;
+            }
+
+            private void UpdateAlignFinish(FieldInput fieldInput)
             {
                 for (int i = 0; i < piecePositions.Length; i++)
                 {
                     var piecePosition = piecePositions[i];
-                    if (piecePosition.isMove)
+                    piecePosition.position = FromGridPosition(piecePosition.gridPosition);
+                    // piecePosition.gridPosition = ToGridPosition(piecePosition.position);
+                    piecePositions[i] = piecePosition;
+                    if (piecePosition.gridPosition.x == 2)
                     {
-                        piecePosition.position = FromGridPosition(piecePosition);
-                        piecePosition.gridPosition = ToGridPosition(piecePosition);
-                        piecePosition.isMove = false;
-                        piecePositions[i] = piecePosition;
+                        // DebugPanel.Log($"piecePositions{i}.position grid", piecePositions[i].position.ToString() + " _ " + piecePositions[i].gridPosition.ToString());
+                        // DebugPanel.Log($"piecePositions{i}.gridPosition", piecePositions[i].gridPosition.ToString());
                     }
                 }
             }
 
-            private static void ResetStartPosition(ref PiecePosition piecePosition)
-            {
-                if (!piecePosition.isMove)
-                {
-                    piecePosition.startPosition = piecePosition.position;
-                }
-            }
+            // private void UpdateAlignment(FieldInput fieldInput)
+            // {
 
-            private Vector2Int ToGridPosition(PiecePosition piecePosition)
+            //     EnumPieceAlignVec alignVec = GetPieceAlignVec(fieldInput.distPosition);
+
+            //     for (int i = 0; i < piecePositions.Length; i++)
+            //     {
+            //         var piecePosition = piecePositions[i];
+            //         if (piecePosition.moveType != EnumPieceMoveType.Stop)
+            //         {
+            //             if (piecePosition.moveType == EnumPieceMoveType.HoldMove)
+            //             {
+            //                 // DebugPanel.Log($"alignVec{i}", alignVec.ToString());
+            //                 int deltaX = 0;
+            //                 int deltaY = 0;
+
+            //                 switch (alignVec)
+            //                 {
+            //                     case EnumPieceAlignVec.Left:
+            //                         deltaX = -BorderSpeed;
+            //                         break;
+            //                     case EnumPieceAlignVec.Right:
+            //                         deltaX = +BorderSpeed;
+            //                         break;
+            //                     case EnumPieceAlignVec.Up:
+            //                         deltaY = +BorderSpeed;
+            //                         break;
+            //                     case EnumPieceAlignVec.Down:
+            //                         deltaY = -BorderSpeed;
+            //                         break;
+            //                 }
+
+            //                 piecePosition.delta = new Vector2Int(deltaX, deltaY);
+            //             }
+
+            //             piecePosition.delta = BreakDelta(piecePosition);
+
+            //             Vector2Int newPosition = new Vector2Int(
+            //                 RoundPos(piecePosition.position.x + piecePosition.delta.x),
+            //                 RoundPos(piecePosition.position.y + piecePosition.delta.y));
+
+            //             EnumPieceAlignVec newPosAlignVec = GetPieceAlignVec(newPosition);
+            //             bool isStop = newPosAlignVec != alignVec;
+
+            //             piecePosition.position = (isStop)
+            //                 ? FromGridPosition(piecePosition)
+            //                 : newPosition;
+            //             // piecePosition.position = newPosition;
+            //             piecePosition.gridPosition = ToGridPosition(piecePosition);
+            //             // piecePosition.moveType = (isStop)
+            //             //     ? EnumPieceMoveType.Stop
+            //             //     : EnumPieceMoveType.SlipMove;
+
+            //             piecePositions[i] = piecePosition;
+            //         }
+            //     }
+            // }
+
+            // private Vector2Int BreakDelta(PiecePosition piecePosition)
+            // {
+            //     int deltaX = piecePosition.delta.x;
+            //     if (piecePosition.delta.x > PieceLimitSpeed)
+            //     {
+            //         deltaX = PieceLimitSpeed;
+            //     }
+            //     // else if (piecePosition.delta.x > 0)
+            //     // {
+            //     //     deltaX = piecePosition.delta.x - 1;
+            //     // }
+            //     else if (piecePosition.delta.x < -PieceLimitSpeed)
+            //     {
+            //         deltaX = -PieceLimitSpeed;
+            //     }
+            //     // else if (piecePosition.delta.x < 0)
+            //     // {
+            //     //     deltaX = piecePosition.delta.x + 1;
+            //     // }
+
+            //     int deltaY = piecePosition.delta.y;
+            //     if (piecePosition.delta.y > PieceLimitSpeed)
+            //     {
+            //         deltaY = PieceLimitSpeed;
+            //     }
+            //     // else if (piecePosition.delta.y > 0)
+            //     // {
+            //     //     deltaY = piecePosition.delta.y - 1;
+            //     // }
+            //     else if (piecePosition.delta.y < -PieceLimitSpeed)
+            //     {
+            //         deltaY = -PieceLimitSpeed;
+            //     }
+            //     // else if (piecePosition.delta.y < 0)
+            //     // {
+            //     //     deltaY = piecePosition.delta.y + 1;
+            //     // }
+
+            //     return new Vector2Int(deltaX, deltaY);
+            // }
+
+            // private static void ResetStartPosition(ref PiecePosition piecePosition)
+            // {
+            //     if (piecePosition.moveType == EnumPieceMoveType.Stop)
+            //     {
+            //         piecePosition.startPosition = piecePosition.position;
+            //     }
+            // }
+
+            private Vector2Int ToGridPosition(Vector2Int position)
             {
                 int offset = GridSize / 2;
                 return new Vector2Int(
-                    (int)((piecePosition.position.x + offset) / GridSize) % GridLineLength,
-                    (int)((piecePosition.position.y + offset) / GridSize) % GridLineLength);
+                    (RoundPos(position.x + offset) / GridSize) % GridLineLength,
+                    (RoundPos(position.y + offset) / GridSize) % GridLineLength);
             }
 
-            private Vector2Int FromGridPosition(PiecePosition piecePosition)
+            private Vector2Int FromGridPosition(Vector2Int gridPosition)
             {
+                int offset = 0;
+                //GridSize / 2;
                 return new Vector2Int(
-                    RoundPos((piecePosition.gridPosition.x) * GridSize),
-                    RoundPos((piecePosition.gridPosition.y) * GridSize));
+                    RoundPos((gridPosition.x * GridSize) - offset),
+                    RoundPos((gridPosition.y * GridSize) - offset));
             }
 
-            private int RoundPos(float pos)
+            private EnumPieceAlignVec GetPieceAlignVec(Vector2Int position)
+            {
+                int halfPos = (GridSize / 2);
+                int posX = position.x % GridSize;
+                if (posX != 0)
+                {
+                    return (posX < halfPos)
+                        ? EnumPieceAlignVec.Left
+                        : EnumPieceAlignVec.Right;
+                }
+
+                int posY = position.y % GridSize;
+                if (posY != 0)
+                {
+                    return (posY < halfPos)
+                        ? EnumPieceAlignVec.Down
+                        : EnumPieceAlignVec.Up;
+                }
+                return EnumPieceAlignVec.None;
+            }
+
+            private int RoundPos(int pos)
             {
                 return (pos >= 0)
-                    ? (int)pos % FieldSize
-                    : (FieldSize - ((int)Mathf.Abs(pos) % FieldSize) - 1);
+                    ? pos % FieldSize
+                    : (FieldSize - (Mathf.Abs(pos) % FieldSize));
             }
         }
 

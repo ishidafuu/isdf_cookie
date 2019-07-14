@@ -37,7 +37,7 @@ namespace NKPB
                 // Debug.Log(toukiMeter.muki);
                 // DebugPanel.Log("ToukiMeter.value", toukiMeter.value.ToString());
                 // DebugPanel.Log($"piecePositions{i}", piecePositions[i].position.ToString());
-                DebugPanel.Log($"fieldBanishs[i].isBanish{i}", fieldBanishs[i].isBanish.ToString());
+                // DebugPanel.Log($"fieldBanishs[i].isBanish{i}", fieldBanishs[i].isBanish.ToString());
                 // DebugPanel.Log($"fieldInput.pieceId{i}", fieldInput.pieceId.ToString());
                 // DebugPanel.Log($"fieldInput.isInfield{i}", fieldInput.isInfield);
                 // fieldInputs[i] = fieldInput;

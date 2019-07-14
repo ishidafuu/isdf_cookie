@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4707ec5e1fec5e84cb0c682d20073162, type: 3}
   m_Name: CommonSettings
   m_EditorClassIdentifier: 
-  PixelSize: 4
   FieldCount: 1
   PlayerCount: 1
   GridLineLength: 5
@@ -20,11 +19,12 @@ MonoBehaviour:
   GridSize: 16
   PieceColorCount: 5
   FieldOffsetX: 0
-  FieldOffsetY: 0
-  PieceOffsetX: -32
-  PieceOffsetY: -24
+  FieldOffsetY: -28
+  PieceOffsetX: -40
+  PieceOffsetY: -32
   GridOffsetX: 0
   GridOffsetY: 8
   SwipeThreshold: 2
   BanishEndCount: 30
   BanishImageCount: 3
+  BorderSpeed: 2

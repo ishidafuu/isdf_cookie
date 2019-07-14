@@ -9,7 +9,6 @@ namespace NKPB
     [CreateAssetMenu(menuName = "Settings/CommonSettings", fileName = "CommonSettings")]
     public sealed class CommonSettings : ScriptableObject
     {
-        public int PixelSize;
         public int FieldCount;
         public int PlayerCount;
         public int GridLineLength;
@@ -26,5 +25,7 @@ namespace NKPB
         public int SwipeThreshold;
         public int BanishEndCount;
         public int BanishImageCount;
+        // public int PieceLimitSpeed;
+        public int BorderSpeed;
     }
 }

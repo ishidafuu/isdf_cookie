@@ -88,7 +88,6 @@ namespace NKPB
                 FieldOffsetY = Define.Instance.Common.FieldOffsetY,
                 PieceOffsetX = Define.Instance.Common.PieceOffsetX,
                 PieceOffsetY = Define.Instance.Common.PieceOffsetY,
-                PixelSize = Define.Instance.Common.PixelSize,
                 GridSize = Define.Instance.Common.GridSize,
                 GridLineLength = Define.Instance.Common.GridLineLength,
 
@@ -110,7 +109,6 @@ namespace NKPB
             [ReadOnly] public int FieldOffsetY;
             [ReadOnly] public int PieceOffsetX;
             [ReadOnly] public int PieceOffsetY;
-            [ReadOnly] public int PixelSize;
 
             [ReadOnly] public int GridSize;
             [ReadOnly] public int GridLineLength;

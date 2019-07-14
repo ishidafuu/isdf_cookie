@@ -43,4 +43,5 @@ ehthumbs.db
 sysinfo.txt #Unity3D Generated File On Crash Reports
 
 *.exe
-#*.dll
+*.dll
+*.symbols.zip

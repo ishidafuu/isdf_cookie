@@ -30,8 +30,16 @@ namespace NKPB
         // エンティティリスト
         List<Entity> m_playerEntityList = new List<Entity>();
 
+        [SerializeField]
+        PixelPerfectCamera pixelPerfectCamera;
+
         void Start()
         {
+
+            // pixelPerfectCamera.refResolutionX = (Screen.width / 8);
+
+            Define.Instance.SetPixelSize(Screen.width / pixelPerfectCamera.refResolutionX);
+
             // シーンの判定
             var scene = SceneManager.GetActiveScene();
             if (scene.name != SCENE_NAME)
