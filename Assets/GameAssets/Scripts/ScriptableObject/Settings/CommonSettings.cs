@@ -3,17 +3,17 @@ using UnityEngine;
 
 namespace NKPB
 {
-    /// <summary>
-    /// 座標移動設定
-    /// </summary>
     [CreateAssetMenu(menuName = "Settings/CommonSettings", fileName = "CommonSettings")]
     public sealed class CommonSettings : ScriptableObject
     {
         public int FieldCount;
         public int PlayerCount;
-        public int GridLineLength;
-        public int PieceCount;
+        public int GridRowLength;
+        public int GridColumnLength;
+        public int PieceCount => (GridRowLength * GridColumnLength);
         public int GridSize;
+        public int FieldWidth => (GridSize * GridRowLength);
+        public int FieldHeight => (GridSize * GridColumnLength);
         public int PieceColorCount;
 
         public int FieldOffsetX;
@@ -25,7 +25,6 @@ namespace NKPB
         public int SwipeThreshold;
         public int BanishEndCount;
         public int BanishImageCount;
-        // public int PieceLimitSpeed;
         public int BorderSpeed;
         public int BorderOnGridDist;
     }

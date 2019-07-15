@@ -11,7 +11,7 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
-    [UpdateAfter(typeof(InputGroup))]
+    [UpdateAfter(typeof(FieldMoveGroup))]
     public class PieceCountSystem : JobComponentSystem
     {
         ComponentGroup m_groupPiece;
@@ -45,26 +45,26 @@ namespace NKPB
 
             public void Execute()
             {
-                int imageFrame = (BanishEndCount / BanishImageCount);
-                for (int i = 0; i < pieceStates.Length; i++)
-                {
-                    var pieceState = pieceStates[i];
-                    if (!pieceState.isBanish)
-                        continue;
+                // int imageFrame = (BanishEndCount / BanishImageCount);
+                // for (int i = 0; i < pieceStates.Length; i++)
+                // {
+                //     var pieceState = pieceStates[i];
+                //     if (!pieceState.isBanish)
+                //         continue;
 
-                    pieceState.count++;
-                    if (pieceState.count >= BanishEndCount)
-                    {
-                        pieceState.isBanish = false;
-                        pieceState.imageNo = 0;
-                    }
-                    else
-                    {
-                        pieceState.imageNo = pieceState.count / imageFrame;
-                    }
+                //     pieceState.count++;
+                //     if (pieceState.count >= BanishEndCount)
+                //     {
+                //         pieceState.isBanish = false;
+                //         pieceState.imageNo = 0;
+                //     }
+                //     else
+                //     {
+                //         pieceState.imageNo = pieceState.count / imageFrame;
+                //     }
 
-                    pieceStates[i] = pieceState;
-                }
+                //     pieceStates[i] = pieceState;
+                // }
             }
         }
     }

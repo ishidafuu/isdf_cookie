@@ -11,7 +11,7 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
-    [UpdateAfter(typeof(InputGroup))]
+    [UpdateAfter(typeof(FieldMoveGroup))]
     public class FieldCountSystem : JobComponentSystem
     {
         ComponentGroup m_group;
@@ -52,7 +52,7 @@ namespace NKPB
 
                     if (fieldBanish.count > BanishEndCount)
                     {
-                        fieldBanish.phase = EnumBanishPhase.None;
+                        fieldBanish.phase = EnumBanishPhase.BanishEnd;
                     }
 
                     fieldBanishs[i] = fieldBanish;

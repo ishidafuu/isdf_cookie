@@ -12,7 +12,7 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(ScanGroup))]
-    [UpdateBefore(typeof(InputGroup))]
+    [UpdateBefore(typeof(FieldMoveGroup))]
     public class ScanSystem : ComponentSystem
     {
         ComponentGroup m_group;

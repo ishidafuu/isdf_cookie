@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(JudgeGroup))]
-    [UpdateAfter(typeof(InputGroup))]
+    [UpdateAfter(typeof(PieceMoveGroup))]
     public class FieldCheckBanishSystem : JobComponentSystem
     {
         ComponentGroup m_groupField;
@@ -53,7 +53,7 @@ namespace NKPB
                 effectStates = m_groupEffect.GetComponentDataArray<EffectState>(),
 
                 GridSize = Define.Instance.Common.GridSize,
-                GridLineLength = Define.Instance.Common.GridLineLength,
+                GridLineLength = Define.Instance.Common.GridRowLength,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
@@ -76,17 +76,26 @@ namespace NKPB
             public void Execute()
             {
                 var fieldBanish = fieldBanishs[0];
-
-                if (fieldBanish.phase == EnumBanishPhase.BanishStart)
+                DebugPanel.Log($"fieldBanish.phase", fieldBanish.phase.ToString());
+                switch (fieldBanish.phase)
                 {
-                    fieldBanish.phase = EnumBanishPhase.Banish;
-                    fieldBanishs[0] = fieldBanish;
-                    return;
+                    case EnumBanishPhase.BanishStart:
+                        fieldBanish.phase = EnumBanishPhase.Banish;
+                        fieldBanishs[0] = fieldBanish;
+                        break;
+                    case EnumBanishPhase.FallStart:
+                    case EnumBanishPhase.Banish:
+                        break;
+                    case EnumBanishPhase.None:
+                    case EnumBanishPhase.BanishEnd:
+                        CheckLine(ref fieldBanish);
+                        break;
                 }
 
-                if (fieldBanish.phase != EnumBanishPhase.None)
-                    return;
+            }
 
+            private void CheckLine(ref FieldBanish fieldBanish)
+            {
                 var fieldInput = fieldInputs[0];
                 if (!fieldInput.isOnGrid)
                     return;
@@ -109,7 +118,6 @@ namespace NKPB
                             PieceState pieceState = pieceStates[index];
                             UpdatePieceStateAndEffectState(ref pieceState, i, index);
                         }
-                        // return;
                     }
                 }
 
@@ -131,21 +139,27 @@ namespace NKPB
                             PieceState pieceState = pieceStates[index];
                             UpdatePieceStateAndEffectState(ref pieceState, i, index);
                         }
-                        // return;
                     }
+                }
+
+                if (fieldBanish.phase == EnumBanishPhase.BanishEnd)
+                {
+                    fieldBanish.phase = EnumBanishPhase.FallStart;
+                    fieldBanishs[0] = fieldBanish;
                 }
             }
 
             private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int i, int index)
             {
+                if (pieceState.isBanish)
+                    return;
+
                 pieceState.isBanish = true;
                 pieceState.count = 0;
                 //TODO:
                 pieceState.color = i;
                 pieceStates[index] = pieceState;
-
                 UpdateEffectState(piecePositions[index].gridPosition);
-
             }
 
             private void UpdateEffectState(Vector2Int gridPosition)
@@ -174,24 +188,42 @@ namespace NKPB
             bool CheckColor(PieceState st0, PieceState st1, PieceState st2, PieceState st3, PieceState st4)
             {
 
-                if (st0.type != EnumPieceType.Normal)
-                    return false;
-                if (st1.type != EnumPieceType.Normal)
-                    return false;
-                if (st2.type != EnumPieceType.Normal)
-                    return false;
-                if (st3.type != EnumPieceType.Normal)
-                    return false;
-                if (st4.type != EnumPieceType.Normal)
+                if (st0.isBanish && st1.isBanish && st2.isBanish && st3.isBanish && st4.isBanish)
                     return false;
 
-                if (st0.color != st1.color)
+                if (!st0.isBanish && st0.type != EnumPieceType.Normal)
                     return false;
-                if (st0.color != st2.color)
+                if (!st1.isBanish && st1.type != EnumPieceType.Normal)
                     return false;
-                if (st0.color != st3.color)
+                if (!st2.isBanish && st2.type != EnumPieceType.Normal)
                     return false;
-                if (st0.color != st4.color)
+                if (!st3.isBanish && st3.type != EnumPieceType.Normal)
+                    return false;
+                if (!st4.isBanish && st4.type != EnumPieceType.Normal)
+                    return false;
+
+                int lineColor = 0;
+
+                if (!st0.isBanish)
+                    lineColor = st0.color;
+                else if (!st1.isBanish)
+                    lineColor = st1.color;
+                else if (!st2.isBanish)
+                    lineColor = st2.color;
+                else if (!st3.isBanish)
+                    lineColor = st3.color;
+                else if (!st4.isBanish)
+                    lineColor = st4.color;
+
+                if (!st0.isBanish && st0.color != lineColor)
+                    return false;
+                if (!st1.isBanish && st1.color != lineColor)
+                    return false;
+                if (!st2.isBanish && st2.color != lineColor)
+                    return false;
+                if (!st3.isBanish && st3.color != lineColor)
+                    return false;
+                if (!st4.isBanish && st4.color != lineColor)
                     return false;
 
                 return true;

@@ -10,9 +10,9 @@ using UnityEngine;
 
 namespace NKPB
 {
-    [UpdateInGroup(typeof(InputGroup))]
+    [UpdateInGroup(typeof(FieldMoveGroup))]
     [UpdateAfter(typeof(ScanGroup))]
-    public class FieldInputSystem : JobComponentSystem
+    public class FieldInputMoveSystem : JobComponentSystem
     {
         ComponentGroup m_groupField;
         static int m_offsetConvertPositionX;
@@ -70,11 +70,15 @@ namespace NKPB
                     var fieldBanish = fieldBanishs[i];
 
                     Vector2Int gamePosition = ConvertPosition(fieldScan.nowPosition);
-                    // DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
+                    DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
 
                     if (fieldBanish.phase == EnumBanishPhase.BanishStart)
                     {
                         UpdateFinishAlign(i, fieldScan, fieldInput, gamePosition);
+                        break;
+                    }
+                    else if (fieldBanish.phase != EnumBanishPhase.None)
+                    {
                         break;
                     }
 
@@ -187,7 +191,7 @@ namespace NKPB
 
             private static bool CheckInfield(Vector2Int position)
             {
-                float size = Define.Instance.Common.GridSize * Define.Instance.Common.GridLineLength;
+                float size = Define.Instance.Common.GridSize * Define.Instance.Common.GridRowLength;
                 return ((position.x > 0 && position.x < size)
                     && (position.y > 0 && position.y < size));
             }

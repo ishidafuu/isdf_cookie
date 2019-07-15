@@ -10,9 +10,9 @@ using UnityEngine;
 
 namespace NKPB
 {
-    [UpdateInGroup(typeof(MoveGroup))]
+    [UpdateInGroup(typeof(PieceMoveGroup))]
     [UpdateAfter(typeof(CountGroup))]
-    public class PieceInputSystem : JobComponentSystem
+    public class PieceInputMoveSystem : JobComponentSystem
     {
         ComponentGroup m_groupField;
         ComponentGroup m_groupPiece;
@@ -44,7 +44,10 @@ namespace NKPB
                 gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
                 piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
                 GridSize = Define.Instance.Common.GridSize,
-                GridLineLength = Define.Instance.Common.GridLineLength,
+                GridRowLength = Define.Instance.Common.GridRowLength,
+                GridColumnLength = Define.Instance.Common.GridColumnLength,
+                FieldWidth = Define.Instance.Common.FieldWidth,
+                FieldHeight = Define.Instance.Common.FieldHeight,
                 // PieceLimitSpeed = Define.Instance.Common.PieceLimitSpeed,
                 BorderSpeed = Define.Instance.Common.BorderSpeed,
             };
@@ -56,7 +59,8 @@ namespace NKPB
                 piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
                 gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
                 GridSize = Define.Instance.Common.GridSize,
-                GridLineLength = Define.Instance.Common.GridLineLength,
+                GridRowLength = Define.Instance.Common.GridRowLength,
+                GridColumnLength = Define.Instance.Common.GridColumnLength,
             };
 
             inputDeps = reflectJob.Schedule(inputDeps);
@@ -72,13 +76,14 @@ namespace NKPB
             [ReadOnly] public ComponentDataArray<FieldBanish> fieldBanishs;
             [ReadOnly] public ComponentDataArray<GridState> gridStates;
             [ReadOnly] public int GridSize;
-            [ReadOnly] public int GridLineLength;
+            [ReadOnly] public int GridRowLength;
+            [ReadOnly] public int GridColumnLength;
             [ReadOnly] public int BorderSpeed;
-            [ReadOnly] public int FieldSize;
+            [ReadOnly] public int FieldWidth;
+            [ReadOnly] public int FieldHeight;
 
             public void Execute()
             {
-                FieldSize = GridSize * GridLineLength;
                 for (int i = 0; i < fieldInputs.Length; i++)
                 {
                     var fieldInput = fieldInputs[i];
@@ -116,7 +121,7 @@ namespace NKPB
                         var piecePosition = piecePositions[i];
                         if (piecePosition.gridPosition.y == fieldInput.gridPosition.y)
                         {
-                            int posX = RoundPos(piecePosition.startPosition.x + fieldInput.distPosition.x);
+                            int posX = RoundPos(piecePosition.startPosition.x + fieldInput.distPosition.x, FieldWidth);
                             Vector2Int newPos = new Vector2Int(posX, piecePosition.position.y);
                             piecePositions[i] = MovePosition(piecePosition, newPos); //, delta);
                         }
@@ -129,7 +134,7 @@ namespace NKPB
                         var piecePosition = piecePositions[i];
                         if (piecePosition.gridPosition.x == fieldInput.gridPosition.x)
                         {
-                            int posY = RoundPos(piecePosition.startPosition.y + fieldInput.distPosition.y);
+                            int posY = RoundPos(piecePosition.startPosition.y + fieldInput.distPosition.y, FieldHeight);
                             Vector2Int newPos = new Vector2Int(piecePosition.position.x, posY);
                             piecePositions[i] = MovePosition(piecePosition, newPos);
                             if (piecePosition.gridPosition.x == 2)
@@ -183,8 +188,8 @@ namespace NKPB
             {
                 int offset = GridSize / 2;
                 return new Vector2Int(
-                    (RoundPos(position.x + offset) / GridSize) % GridLineLength,
-                    (RoundPos(position.y + offset) / GridSize) % GridLineLength);
+                    (RoundPos(position.x + offset, FieldWidth) / GridSize) % GridRowLength,
+                    (RoundPos(position.y + offset, FieldHeight) / GridSize) % GridColumnLength);
             }
 
             private Vector2Int FromGridPosition(Vector2Int gridPosition)
@@ -192,8 +197,8 @@ namespace NKPB
                 int offset = 0;
                 //GridSize / 2;
                 return new Vector2Int(
-                    RoundPos((gridPosition.x * GridSize) - offset),
-                    RoundPos((gridPosition.y * GridSize) - offset));
+                    RoundPos((gridPosition.x * GridSize) - offset, FieldWidth),
+                    RoundPos((gridPosition.y * GridSize) - offset, FieldHeight));
             }
 
             private EnumPieceAlignVec GetPieceAlignVec(Vector2Int position)
@@ -217,11 +222,11 @@ namespace NKPB
                 return EnumPieceAlignVec.None;
             }
 
-            private int RoundPos(int pos)
+            private int RoundPos(int pos, int fieldSize)
             {
                 return (pos >= 0)
-                    ? pos % FieldSize
-                    : (FieldSize - (Mathf.Abs(pos) % FieldSize));
+                    ? pos % fieldSize
+                    : (fieldSize - (Mathf.Abs(pos) % fieldSize));
             }
         }
 
@@ -231,7 +236,8 @@ namespace NKPB
             public ComponentDataArray<GridState> gridStates;
             [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
             [ReadOnly] public int GridSize;
-            [ReadOnly] public int GridLineLength;
+            [ReadOnly] public int GridRowLength;
+            [ReadOnly] public int GridColumnLength;
             [ReadOnly] public int FieldSize;
 
             public void Execute()
@@ -239,7 +245,7 @@ namespace NKPB
                 for (int i = 0; i < piecePositions.Length; i++)
                 {
                     var piecePosition = piecePositions[i];
-                    int index = (piecePosition.gridPosition.x + piecePosition.gridPosition.y * GridLineLength);
+                    int index = (piecePosition.gridPosition.x + piecePosition.gridPosition.y * GridRowLength);
                     var gridState = gridStates[index];
                     gridState.pieceId = i;
                     gridStates[index] = gridState;

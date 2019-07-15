@@ -21,8 +21,8 @@ namespace NKPB
             var archetype = _entityManager.CreateArchetype(ComponentTypes.GridComponentType);
             var entity = _entityManager.CreateEntity(archetype);
 
-            int posX = _gridId % Define.Instance.Common.GridLineLength;
-            int posY = _gridId / Define.Instance.Common.GridLineLength;
+            int posX = _gridId % Define.Instance.Common.GridRowLength;
+            int posY = _gridId / Define.Instance.Common.GridColumnLength;
 
             // 位置
             _entityManager.SetComponentData(entity, new GridState

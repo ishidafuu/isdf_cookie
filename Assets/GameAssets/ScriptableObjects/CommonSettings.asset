@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FieldCount: 1
   PlayerCount: 1
-  GridLineLength: 5
-  PieceCount: 25
+  GridRowLength: 5
+  GridColumnLength: 5
   GridSize: 16
   PieceColorCount: 5
   FieldOffsetX: 0

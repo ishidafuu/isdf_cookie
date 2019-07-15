@@ -27,13 +27,8 @@ namespace NKPB
                     pieceId = _pieceId,
             });
 
-            // ComponentDataのセット
-            // float posX = (_pieceId % Define.Instance.Common.GridLineLength * Define.Instance.Common.GridSize)
-            //     + Define.Instance.Common.FieldOffsetX + Define.Instance.Common.PieceOffsetX;
-            // float posY = (_pieceId / Define.Instance.Common.GridLineLength * Define.Instance.Common.GridSize)
-            //     + Define.Instance.Common.FieldOffsetX + Define.Instance.Common.PieceOffsetY;
-            int gridPosX = _pieceId % Define.Instance.Common.GridLineLength;
-            int gridPosY = _pieceId / Define.Instance.Common.GridLineLength;
+            int gridPosX = _pieceId % Define.Instance.Common.GridRowLength;
+            int gridPosY = _pieceId / Define.Instance.Common.GridColumnLength;
             int posX = gridPosX * Define.Instance.Common.GridSize;
             int posY = gridPosY * Define.Instance.Common.GridSize;
 

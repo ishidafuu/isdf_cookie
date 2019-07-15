@@ -21,6 +21,9 @@ namespace NKPB
         None,
         BanishStart,
         Banish,
+        BanishEnd,
+        FallStart,
+        Fall,
     }
 
     public enum EnumPieceAlignVec

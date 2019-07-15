@@ -11,7 +11,7 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
-    [UpdateAfter(typeof(InputGroup))]
+    [UpdateAfter(typeof(FieldMoveGroup))]
     public class EffectCountSystem : JobComponentSystem
     {
         ComponentGroup m_group;

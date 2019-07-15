@@ -48,14 +48,17 @@ namespace NKPB
         void InitializeSystem(World world)
         {
             world.CreateManager(typeof(ScanSystem));
-            world.CreateManager(typeof(FieldInputSystem));
-            world.CreateManager(typeof(PieceInputSystem));
+            world.CreateManager(typeof(FieldInputMoveSystem));
+
+            world.CreateManager(typeof(PieceInputMoveSystem));
+            world.CreateManager(typeof(PieceFallMoveSystem));
 
             world.CreateManager(typeof(FieldCountSystem));
             world.CreateManager(typeof(PieceCountSystem));
             world.CreateManager(typeof(EffectCountSystem));
 
             world.CreateManager(typeof(FieldCheckBanishSystem));
+            world.CreateManager(typeof(PieceFallStartSystem));
             world.CreateManager(typeof(BGDrawSystem));
 
             world.CreateManager(typeof(PieceDrawSystem));
