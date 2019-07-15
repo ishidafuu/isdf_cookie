@@ -15,7 +15,6 @@ namespace NKPB
     public class FieldInputSystem : JobComponentSystem
     {
         ComponentGroup m_groupField;
-        // ComponentGroup m_groupGrid;
         static int m_offsetConvertPositionX;
         static int m_offsetConvertPositionY;
 
@@ -36,12 +35,13 @@ namespace NKPB
             m_groupField.AddDependency(inputDeps);
             var job = new MoveJob()
             {
-                fieldScans = m_groupField.GetComponentDataArray<FieldScan>(),
                 fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
+                fieldScans = m_groupField.GetComponentDataArray<FieldScan>(),
                 fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
                 SwipeThreshold = Define.Instance.Common.SwipeThreshold,
                 GridSize = Define.Instance.Common.GridSize,
                 BorderSpeed = Define.Instance.Common.BorderSpeed,
+                BorderOnGridDist = Define.Instance.Common.BorderOnGridDist,
             };
 
             inputDeps = job.Schedule(inputDeps);
@@ -52,15 +52,13 @@ namespace NKPB
         // [BurstCompileAttribute]
         struct MoveJob : IJob
         {
-            [ReadOnly]
-            public ComponentDataArray<FieldScan> fieldScans;
-            [ReadOnly]
-            public ComponentDataArray<FieldBanish> fieldBanishs;
             public ComponentDataArray<FieldInput> fieldInputs;
-
-            public float SwipeThreshold;
-            public int GridSize;
-            public int BorderSpeed;
+            [ReadOnly] public ComponentDataArray<FieldScan> fieldScans;
+            [ReadOnly] public ComponentDataArray<FieldBanish> fieldBanishs;
+            [ReadOnly] public float SwipeThreshold;
+            [ReadOnly] public int GridSize;
+            [ReadOnly] public int BorderSpeed;
+            [ReadOnly] public int BorderOnGridDist;
 
             public void Execute()
             {
@@ -70,11 +68,13 @@ namespace NKPB
                     var fieldScan = fieldScans[i];
                     var fieldInput = fieldInputs[i];
                     var fieldBanish = fieldBanishs[i];
+
                     Vector2Int gamePosition = ConvertPosition(fieldScan.nowPosition);
-                    DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
-                    if (fieldBanish.isBanish)
+                    // DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
+
+                    if (fieldBanish.phase == EnumBanishPhase.BanishStart)
                     {
-                        UpdateEnded(i, fieldScan, fieldInput, gamePosition);
+                        UpdateFinishAlign(i, fieldScan, fieldInput, gamePosition);
                         break;
                     }
 
@@ -108,11 +108,11 @@ namespace NKPB
             {
                 if (!CheckInfield(gamePosition))
                     return;
+
                 fieldInput.phase = EnumFieldInputPhase.Hold;
                 fieldInput.gridPosition = ConvertGridPosition(gamePosition);
                 fieldInput.startPosition = gamePosition;
-                fieldInput.swipeType = EnumSwipeType.None;
-                // fieldInput.delta = Vector2.zero;
+                fieldInput.swipeVec = EnumSwipeVec.None;
                 fieldInput.distPosition = Vector2Int.zero;
                 fieldInputs[i] = fieldInput;
             }
@@ -122,10 +122,9 @@ namespace NKPB
                 fieldInput.phase = EnumFieldInputPhase.Align;
                 fieldInput.alignVec = GetAlignVec(fieldInput, fieldScan);
                 fieldInput.alignDelta = GetAlignDelta(fieldInput.alignVec);
-
-                DebugPanel.Log($"fieldInput.alignVec", fieldInput.alignVec.ToString());
-                DebugPanel.Log($"fieldInput.alignDelta", fieldInput.alignDelta.ToString());
-                // fieldInput.swipeType = EnumSwipeType.None;
+                fieldInput.isOnGrid = CheckOnGrid(fieldInput.distPosition, fieldInput.swipeVec);
+                // DebugPanel.Log($"fieldInput.alignVec", fieldInput.alignVec.ToString());
+                // DebugPanel.Log($"fieldInput.alignDelta", fieldInput.alignDelta.ToString());
                 fieldInputs[i] = fieldInput;
             }
 
@@ -135,31 +134,48 @@ namespace NKPB
                     return;
 
                 Vector2 distPosition = (fieldScan.nowPosition - fieldScan.startPosition);
-                if (fieldInput.swipeType == EnumSwipeType.None)
+                DecideSwipeVec(ref fieldInput, distPosition);
+
+                fieldInput.distPosition = new Vector2Int(
+                    (int)(distPosition.x / Define.Instance.PixelSize),
+                    (int)(distPosition.y / Define.Instance.PixelSize));
+                fieldInput.isOnGrid = CheckOnGrid(fieldInput.distPosition, fieldInput.swipeVec);
+                DebugPanel.Log($"fieldInput.isOnGrid", fieldInput.isOnGrid.ToString());
+                fieldInputs[i] = fieldInput;
+            }
+
+            private bool CheckOnGrid(Vector2Int position, EnumSwipeVec swipeType)
+            {
+                if (swipeType == EnumSwipeVec.Horizontal)
+                {
+                    int posX = Mathf.Abs(position.x) % GridSize;
+                    DebugPanel.Log($"posX", posX.ToString());
+                    return (posX < BorderOnGridDist) || (GridSize - posX < BorderOnGridDist);
+                }
+                else if (swipeType == EnumSwipeVec.Vertical)
+                {
+                    int posY = Mathf.Abs(position.y) % GridSize;
+                    return (posY < BorderOnGridDist) || (GridSize - posY < BorderOnGridDist);
+                }
+                return true;
+            }
+
+            private void DecideSwipeVec(ref FieldInput fieldInput, Vector2 distPosition)
+            {
+                if (fieldInput.swipeVec == EnumSwipeVec.None)
                 {
                     float distX = Mathf.Abs(distPosition.x);
                     float distY = Mathf.Abs(distPosition.y);
 
-                    if (distX > distY)
+                    if (distX > distY && distX > SwipeThreshold)
                     {
-                        if (distX > SwipeThreshold)
-                        {
-                            fieldInput.swipeType = EnumSwipeType.Horizontal;
-                        }
+                        fieldInput.swipeVec = EnumSwipeVec.Horizontal;
                     }
-                    else
+                    else if (distX < distY && distY > SwipeThreshold)
                     {
-                        if (distY > SwipeThreshold)
-                        {
-                            fieldInput.swipeType = EnumSwipeType.Vertical;
-                        }
+                        fieldInput.swipeVec = EnumSwipeVec.Vertical;
                     }
                 }
-                // fieldInput.delta = fieldScan.delta;
-                fieldInput.distPosition = new Vector2Int(
-                    (int)(distPosition.x / Define.Instance.PixelSize),
-                    (int)(distPosition.y / Define.Instance.PixelSize));
-                fieldInputs[i] = fieldInput;
             }
 
             private Vector2Int ConvertPosition(Vector2 scanPosition)
@@ -186,31 +202,34 @@ namespace NKPB
             private void UpdateAlign(int i, FieldScan fieldScan, FieldInput fieldInput, Vector2Int gamePosition)
             {
 
-                EnumPieceAlignVec lastAlignVec = BackAlignVec(fieldInput.distPosition, fieldInput.swipeType);
                 Vector2Int newDistPosition = fieldInput.distPosition + fieldInput.alignDelta;
-                EnumPieceAlignVec nowAlignVec = BackAlignVec(newDistPosition, fieldInput.swipeType);
-                // Vector2Int lastGridPos = ConvertGridPosition(fieldInput.distPosition);
-                // Vector2Int newGridPos = ConvertGridPosition(newDistPosition);
 
-                DebugPanel.Log($"fieldInput.distPosition", fieldInput.distPosition.ToString());
-                DebugPanel.Log($"newDistPosition", newDistPosition.ToString());
-                DebugPanel.Log($"lastAlignVec", lastAlignVec.ToString());
-                DebugPanel.Log($"fieldInput.alignVec", fieldInput.alignVec.ToString());
-                if (((lastAlignVec != nowAlignVec) && lastAlignVec == fieldInput.alignVec)
-                    || lastAlignVec == EnumPieceAlignVec.None)
+                if (CheckFinishAlign(fieldInput, newDistPosition))
                 {
                     fieldInput.phase = EnumFieldInputPhase.FinishAlign;
                 }
 
                 fieldInput.distPosition = newDistPosition;
+                fieldInput.isOnGrid = CheckOnGrid(fieldInput.distPosition, fieldInput.swipeVec);
                 fieldInputs[i] = fieldInput;
+            }
+
+            private bool CheckFinishAlign(FieldInput fieldInput, Vector2Int newDistPosition)
+            {
+                EnumPieceAlignVec lastAlignVec = GetBackAlignVec(fieldInput.distPosition, fieldInput.swipeVec);
+                EnumPieceAlignVec nowAlignVec = GetBackAlignVec(newDistPosition, fieldInput.swipeVec);
+                // DebugPanel.Log($"fieldInput.distPosition", fieldInput.distPosition.ToString());
+                // DebugPanel.Log($"newDistPosition", newDistPosition.ToString());
+                // DebugPanel.Log($"lastAlignVec", lastAlignVec.ToString());
+                // DebugPanel.Log($"fieldInput.alignVec", fieldInput.alignVec.ToString());
+                return (((lastAlignVec != nowAlignVec) && lastAlignVec == fieldInput.alignVec)
+                    || lastAlignVec == EnumPieceAlignVec.None);
             }
 
             private void UpdateFinishAlign(int i, FieldScan fieldScan, FieldInput fieldInput, Vector2Int gamePosition)
             {
                 fieldInput.phase = EnumFieldInputPhase.None;
-                fieldInput.swipeType = EnumSwipeType.None;
-                // fieldInput.delta = Vector2.zero;
+                fieldInput.swipeVec = EnumSwipeVec.None;
                 fieldInput.distPosition = Vector2Int.zero;
                 fieldInputs[i] = fieldInput;
             }
@@ -239,21 +258,20 @@ namespace NKPB
 
             private EnumPieceAlignVec GetAlignVec(FieldInput fieldInput, FieldScan fieldScan)
             {
-                if ((Mathf.Abs(fieldScan.delta.x) > BorderSpeed && fieldInput.swipeType == EnumSwipeType.Horizontal)
-                    || (Mathf.Abs(fieldScan.delta.y) > BorderSpeed && fieldInput.swipeType == EnumSwipeType.Vertical))
+                if ((Mathf.Abs(fieldScan.delta.x) > BorderSpeed && fieldInput.swipeVec == EnumSwipeVec.Horizontal)
+                    || (Mathf.Abs(fieldScan.delta.y) > BorderSpeed && fieldInput.swipeVec == EnumSwipeVec.Vertical))
                 {
-                    return SlipAlignVec(fieldScan.delta, fieldInput.swipeType);
+                    return GetSlipAlignVec(fieldScan.delta, fieldInput.swipeVec);
                 }
                 else
                 {
-                    return BackAlignVec(fieldInput.distPosition, fieldInput.swipeType);
+                    return GetBackAlignVec(fieldInput.distPosition, fieldInput.swipeVec);
                 }
-                // return BackAlignVec(fieldInput.distPosition);
             }
-            private EnumPieceAlignVec BackAlignVec(Vector2Int position, EnumSwipeType swipeType)
+            private EnumPieceAlignVec GetBackAlignVec(Vector2Int position, EnumSwipeVec swipeType)
             {
                 int halfPos = (GridSize / 2);
-                if (swipeType == EnumSwipeType.Horizontal)
+                if (swipeType == EnumSwipeVec.Horizontal)
                 {
                     int posX = Mathf.Abs(position.x) % GridSize;
                     if (posX != 0)
@@ -263,7 +281,7 @@ namespace NKPB
                             : EnumPieceAlignVec.Right;
                     }
                 }
-                else if (swipeType == EnumSwipeType.Vertical)
+                else if (swipeType == EnumSwipeVec.Vertical)
                 {
                     int posY = Mathf.Abs(position.y) % GridSize;
                     if (posY != 0)
@@ -273,19 +291,20 @@ namespace NKPB
                             : EnumPieceAlignVec.Up;
                     }
                 }
+
                 return EnumPieceAlignVec.None;
             }
 
-            private EnumPieceAlignVec SlipAlignVec(Vector2 delta, EnumSwipeType swipeType)
+            private EnumPieceAlignVec GetSlipAlignVec(Vector2 delta, EnumSwipeVec swipeType)
             {
-                if (swipeType == EnumSwipeType.Horizontal)
+                if (swipeType == EnumSwipeVec.Horizontal)
                 {
                     if (delta.x > 0)
                         return EnumPieceAlignVec.Right;
                     if (delta.x < 0)
                         return EnumPieceAlignVec.Left;
                 }
-                else if (swipeType == EnumSwipeType.Vertical)
+                else if (swipeType == EnumSwipeVec.Vertical)
                 {
                     if (delta.y > 0)
                         return EnumPieceAlignVec.Up;

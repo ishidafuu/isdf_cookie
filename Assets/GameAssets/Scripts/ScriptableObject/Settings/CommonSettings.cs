@@ -27,5 +27,6 @@ namespace NKPB
         public int BanishImageCount;
         // public int PieceLimitSpeed;
         public int BorderSpeed;
+        public int BorderOnGridDist;
     }
 }

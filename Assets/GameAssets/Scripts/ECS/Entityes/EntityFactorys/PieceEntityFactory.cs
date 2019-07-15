@@ -14,16 +14,6 @@ namespace NKPB
 {
     public static class PieceEntityFactory
     {
-
-        /// <summary>
-        /// キャラエンティティ作成
-        /// </summary>
-        /// <param name="i"></param>
-        /// <param name="entityManager"></param>
-        /// <param name="ariMeshMat"></param>
-        /// <param name="aniScriptSheet"></param>
-        /// <param name="aniBasePos"></param>
-        /// <returns></returns>
         public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager,
             ref MeshMatList _meshMatList
         )

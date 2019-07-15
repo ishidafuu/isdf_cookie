@@ -1,6 +1,4 @@
-﻿using Unity.Entities;
-using Unity.Transforms;
-namespace NKPB
+﻿namespace NKPB
 {
     public class ScanGroup {}
     public class InputGroup {}

@@ -21,7 +21,8 @@ namespace NKPB
         protected override void OnCreateManager()
         {
             m_groupField = GetComponentGroup(
-                ComponentType.ReadOnly<FieldInput>()
+                ComponentType.ReadOnly<FieldInput>(),
+                ComponentType.ReadOnly<FieldBanish>()
             );
             m_groupGrid = GetComponentGroup(
                 ComponentType.Create<GridState>()
@@ -39,6 +40,7 @@ namespace NKPB
             var moveJob = new PieceMoveJob()
             {
                 fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
+                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
                 gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
                 piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
                 GridSize = Define.Instance.Common.GridSize,
@@ -65,15 +67,14 @@ namespace NKPB
         // [BurstCompileAttribute]
         struct PieceMoveJob : IJob
         {
-            [ReadOnly]
-            public ComponentDataArray<FieldInput> fieldInputs;
-            public ComponentDataArray<GridState> gridStates;
             public ComponentDataArray<PiecePosition> piecePositions;
-            public int GridSize;
-            public int GridLineLength;
-            // public int PieceLimitSpeed;
-            public int BorderSpeed;
-            int FieldSize;
+            [ReadOnly] public ComponentDataArray<FieldInput> fieldInputs;
+            [ReadOnly] public ComponentDataArray<FieldBanish> fieldBanishs;
+            [ReadOnly] public ComponentDataArray<GridState> gridStates;
+            [ReadOnly] public int GridSize;
+            [ReadOnly] public int GridLineLength;
+            [ReadOnly] public int BorderSpeed;
+            [ReadOnly] public int FieldSize;
 
             public void Execute()
             {
@@ -81,27 +82,34 @@ namespace NKPB
                 for (int i = 0; i < fieldInputs.Length; i++)
                 {
                     var fieldInput = fieldInputs[i];
-                    switch (fieldInput.phase)
+                    var fieldBanish = fieldBanishs[i];
+                    if (fieldBanish.phase == EnumBanishPhase.BanishStart)
                     {
-                        case EnumFieldInputPhase.Align:
-                            // UpdateAlignment(fieldInput);
-                            UpdateHold(fieldInput);
-                            break;
-                        case EnumFieldInputPhase.FinishAlign:
-                            UpdateHold(fieldInput);
-                            UpdateAlignFinish(fieldInput);
-                            break;
-                        case EnumFieldInputPhase.Hold:
-                            UpdateHold(fieldInput);
-                            break;
+                        UpdateAlignFinish(fieldInput);
+                    }
+                    else
+                    {
+                        switch (fieldInput.phase)
+                        {
+                            case EnumFieldInputPhase.Align:
+                                UpdateInputMove(fieldInput);
+                                break;
+                            case EnumFieldInputPhase.FinishAlign:
+                                UpdateInputMove(fieldInput);
+                                UpdateAlignFinish(fieldInput);
+                                break;
+                            case EnumFieldInputPhase.Hold:
+                                UpdateInputMove(fieldInput);
+                                break;
+                        }
                     }
                 }
             }
 
-            private void UpdateHold(FieldInput fieldInput)
+            private void UpdateInputMove(FieldInput fieldInput)
             {
                 // DebugPanel.Log($"fieldInput.distPosition", fieldInput.distPosition.ToString());
-                if (fieldInput.swipeType == EnumSwipeType.Horizontal)
+                if (fieldInput.swipeVec == EnumSwipeVec.Horizontal)
                 {
                     for (int i = 0; i < piecePositions.Length; i++)
                     {
@@ -114,7 +122,7 @@ namespace NKPB
                         }
                     }
                 }
-                else if (fieldInput.swipeType == EnumSwipeType.Vertical)
+                else if (fieldInput.swipeVec == EnumSwipeVec.Vertical)
                 {
                     for (int i = 0; i < piecePositions.Length; i++)
                     {
@@ -162,7 +170,6 @@ namespace NKPB
                 {
                     var piecePosition = piecePositions[i];
                     piecePosition.position = FromGridPosition(piecePosition.gridPosition);
-                    // piecePosition.gridPosition = ToGridPosition(piecePosition.position);
                     piecePositions[i] = piecePosition;
                     if (piecePosition.gridPosition.x == 2)
                     {
@@ -171,113 +178,6 @@ namespace NKPB
                     }
                 }
             }
-
-            // private void UpdateAlignment(FieldInput fieldInput)
-            // {
-
-            //     EnumPieceAlignVec alignVec = GetPieceAlignVec(fieldInput.distPosition);
-
-            //     for (int i = 0; i < piecePositions.Length; i++)
-            //     {
-            //         var piecePosition = piecePositions[i];
-            //         if (piecePosition.moveType != EnumPieceMoveType.Stop)
-            //         {
-            //             if (piecePosition.moveType == EnumPieceMoveType.HoldMove)
-            //             {
-            //                 // DebugPanel.Log($"alignVec{i}", alignVec.ToString());
-            //                 int deltaX = 0;
-            //                 int deltaY = 0;
-
-            //                 switch (alignVec)
-            //                 {
-            //                     case EnumPieceAlignVec.Left:
-            //                         deltaX = -BorderSpeed;
-            //                         break;
-            //                     case EnumPieceAlignVec.Right:
-            //                         deltaX = +BorderSpeed;
-            //                         break;
-            //                     case EnumPieceAlignVec.Up:
-            //                         deltaY = +BorderSpeed;
-            //                         break;
-            //                     case EnumPieceAlignVec.Down:
-            //                         deltaY = -BorderSpeed;
-            //                         break;
-            //                 }
-
-            //                 piecePosition.delta = new Vector2Int(deltaX, deltaY);
-            //             }
-
-            //             piecePosition.delta = BreakDelta(piecePosition);
-
-            //             Vector2Int newPosition = new Vector2Int(
-            //                 RoundPos(piecePosition.position.x + piecePosition.delta.x),
-            //                 RoundPos(piecePosition.position.y + piecePosition.delta.y));
-
-            //             EnumPieceAlignVec newPosAlignVec = GetPieceAlignVec(newPosition);
-            //             bool isStop = newPosAlignVec != alignVec;
-
-            //             piecePosition.position = (isStop)
-            //                 ? FromGridPosition(piecePosition)
-            //                 : newPosition;
-            //             // piecePosition.position = newPosition;
-            //             piecePosition.gridPosition = ToGridPosition(piecePosition);
-            //             // piecePosition.moveType = (isStop)
-            //             //     ? EnumPieceMoveType.Stop
-            //             //     : EnumPieceMoveType.SlipMove;
-
-            //             piecePositions[i] = piecePosition;
-            //         }
-            //     }
-            // }
-
-            // private Vector2Int BreakDelta(PiecePosition piecePosition)
-            // {
-            //     int deltaX = piecePosition.delta.x;
-            //     if (piecePosition.delta.x > PieceLimitSpeed)
-            //     {
-            //         deltaX = PieceLimitSpeed;
-            //     }
-            //     // else if (piecePosition.delta.x > 0)
-            //     // {
-            //     //     deltaX = piecePosition.delta.x - 1;
-            //     // }
-            //     else if (piecePosition.delta.x < -PieceLimitSpeed)
-            //     {
-            //         deltaX = -PieceLimitSpeed;
-            //     }
-            //     // else if (piecePosition.delta.x < 0)
-            //     // {
-            //     //     deltaX = piecePosition.delta.x + 1;
-            //     // }
-
-            //     int deltaY = piecePosition.delta.y;
-            //     if (piecePosition.delta.y > PieceLimitSpeed)
-            //     {
-            //         deltaY = PieceLimitSpeed;
-            //     }
-            //     // else if (piecePosition.delta.y > 0)
-            //     // {
-            //     //     deltaY = piecePosition.delta.y - 1;
-            //     // }
-            //     else if (piecePosition.delta.y < -PieceLimitSpeed)
-            //     {
-            //         deltaY = -PieceLimitSpeed;
-            //     }
-            //     // else if (piecePosition.delta.y < 0)
-            //     // {
-            //     //     deltaY = piecePosition.delta.y + 1;
-            //     // }
-
-            //     return new Vector2Int(deltaX, deltaY);
-            // }
-
-            // private static void ResetStartPosition(ref PiecePosition piecePosition)
-            // {
-            //     if (piecePosition.moveType == EnumPieceMoveType.Stop)
-            //     {
-            //         piecePosition.startPosition = piecePosition.position;
-            //     }
-            // }
 
             private Vector2Int ToGridPosition(Vector2Int position)
             {
@@ -329,11 +229,10 @@ namespace NKPB
         struct GridReflectJob : IJob
         {
             public ComponentDataArray<GridState> gridStates;
-            [ReadOnly]
-            public ComponentDataArray<PiecePosition> piecePositions;
-            public int GridSize;
-            public int GridLineLength;
-            int FieldSize;
+            [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
+            [ReadOnly] public int GridSize;
+            [ReadOnly] public int GridLineLength;
+            [ReadOnly] public int FieldSize;
 
             public void Execute()
             {

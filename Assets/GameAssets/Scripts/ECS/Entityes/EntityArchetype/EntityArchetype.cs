@@ -4,14 +4,10 @@ namespace NKPB
 {
     public static class ComponentTypes
     {
-        /// <summary>
-        /// フィールド
-        /// </summary>
-        /// <value></value>
         public static ComponentType[] FieldComponentType = {
-            typeof(FieldTag), // タグ
-            typeof(FieldId), // ID
-            typeof(FieldInput), // スキャンから変換されたフィールド上への入力
+            typeof(FieldTag),
+            typeof(FieldId),
+            typeof(FieldInput),
             typeof(FieldBanish),
         };
 
@@ -19,15 +15,16 @@ namespace NKPB
             typeof(GridState),
         };
 
-        /// <summary>
-        /// ピース
-        /// </summary>
-        /// <value></value>
         public static ComponentType[] PieceComponentType = {
-            typeof(PieceTag), // タグ
-            typeof(PieceId), // ID
+            typeof(PieceTag),
+            typeof(PieceId),
             typeof(PiecePosition),
             typeof(PieceState),
+        };
+
+        public static ComponentType[] EffectComponentType = {
+            typeof(EffectTag),
+            typeof(EffectState),
         };
     }
 }

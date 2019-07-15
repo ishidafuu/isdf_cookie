@@ -1,33 +1,35 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
-using Unity.Transforms;
 using UnityEngine;
 
 namespace NKPB
 {
     [UpdateInGroup(typeof(JudgeGroup))]
     [UpdateAfter(typeof(InputGroup))]
-    public class PieceLineCheckSystem : JobComponentSystem
+    public class FieldCheckBanishSystem : JobComponentSystem
     {
         ComponentGroup m_groupField;
         ComponentGroup m_groupPiece;
         ComponentGroup m_groupGrid;
+        ComponentGroup m_groupEffect;
 
         protected override void OnCreateManager()
         {
             m_groupField = GetComponentGroup(
+                ComponentType.ReadOnly<FieldInput>(),
                 ComponentType.Create<FieldBanish>()
             );
             m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PieceState>()
+                ComponentType.Create<PieceState>(),
+                ComponentType.ReadOnly<PiecePosition>()
             );
             m_groupGrid = GetComponentGroup(
                 ComponentType.ReadOnly<GridState>()
+            );
+            m_groupEffect = GetComponentGroup(
+                ComponentType.Create<EffectState>()
             );
         }
 
@@ -36,12 +38,20 @@ namespace NKPB
             m_groupField.AddDependency(inputDeps);
             m_groupPiece.AddDependency(inputDeps);
             m_groupGrid.AddDependency(inputDeps);
+            m_groupEffect.AddDependency(inputDeps);
 
             var job = new CheckLineJob()
             {
                 fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
+                fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
+
                 pieceStates = m_groupPiece.GetComponentDataArray<PieceState>(),
+                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
+
                 gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
+
+                effectStates = m_groupEffect.GetComponentDataArray<EffectState>(),
+
                 GridSize = Define.Instance.Common.GridSize,
                 GridLineLength = Define.Instance.Common.GridLineLength,
             };
@@ -55,17 +65,30 @@ namespace NKPB
         {
             public ComponentDataArray<FieldBanish> fieldBanishs;
             public ComponentDataArray<PieceState> pieceStates;
-            [ReadOnly]
-            public ComponentDataArray<GridState> gridStates;
-            public int GridSize;
-            public int GridLineLength;
-            int FieldSize;
+            public ComponentDataArray<EffectState> effectStates;
+            [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
+            [ReadOnly] public ComponentDataArray<FieldInput> fieldInputs;
+            [ReadOnly] public ComponentDataArray<GridState> gridStates;
+            [ReadOnly] public int GridSize;
+            [ReadOnly] public int GridLineLength;
+            [ReadOnly] int FieldSize;
 
             public void Execute()
             {
                 var fieldBanish = fieldBanishs[0];
 
-                if (fieldBanish.isBanish)
+                if (fieldBanish.phase == EnumBanishPhase.BanishStart)
+                {
+                    fieldBanish.phase = EnumBanishPhase.Banish;
+                    fieldBanishs[0] = fieldBanish;
+                    return;
+                }
+
+                if (fieldBanish.phase != EnumBanishPhase.None)
+                    return;
+
+                var fieldInput = fieldInputs[0];
+                if (!fieldInput.isOnGrid)
                     return;
 
                 for (int x = 0; x < GridLineLength; x++)
@@ -79,17 +102,14 @@ namespace NKPB
 
                     if (isSameColor)
                     {
-                        Banish(x, 0);
+                        UpdateFieldBanish(ref fieldBanish, x, 0);
                         for (int i = 0; i < GridLineLength; i++)
                         {
                             int index = gridStates[x + GridLineLength * i].pieceId;
-                            var piece = pieceStates[index];
-                            piece.isBanish = true;
-                            piece.count = 0;
-                            piece.color = i;
-                            pieceStates[index] = piece;
+                            PieceState pieceState = pieceStates[index];
+                            UpdatePieceStateAndEffectState(ref pieceState, i, index);
                         }
-                        return;
+                        // return;
                     }
                 }
 
@@ -104,26 +124,49 @@ namespace NKPB
 
                     if (isSameColor)
                     {
-                        Banish(0, y);
+                        UpdateFieldBanish(ref fieldBanish, 0, y);
                         for (int i = 0; i < GridLineLength; i++)
                         {
                             int index = gridStates[GridLineLength * y + i].pieceId;
-                            var piece = pieceStates[index];
-                            piece.isBanish = true;
-                            piece.count = 0;
-                            piece.color = i;
-                            pieceStates[index] = piece;
+                            PieceState pieceState = pieceStates[index];
+                            UpdatePieceStateAndEffectState(ref pieceState, i, index);
                         }
-                        return;
+                        // return;
                     }
                 }
             }
 
-            private void Banish(int x, int y)
+            private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int i, int index)
             {
-                FieldBanish fieldBanish = fieldBanishs[0];
-                fieldBanish.isBanish = true;
-                fieldBanish.banishLine = new Vector2Int(x, y);
+                pieceState.isBanish = true;
+                pieceState.count = 0;
+                //TODO:
+                pieceState.color = i;
+                pieceStates[index] = pieceState;
+
+                UpdateEffectState(piecePositions[index].gridPosition);
+
+            }
+
+            private void UpdateEffectState(Vector2Int gridPosition)
+            {
+                for (int i = 0; i < effectStates.Length; i++)
+                {
+                    if (effectStates[i].type != EnumEffectType.None)
+                        continue;
+
+                    var effectState = effectStates[i];
+                    effectState.type = EnumEffectType.Banish;
+                    effectState.position = new Vector2Int(gridPosition.x * GridSize, gridPosition.y * GridSize);
+                    effectState.count = 0;
+                    effectStates[i] = effectState;
+                    break;
+                }
+            }
+
+            private void UpdateFieldBanish(ref FieldBanish fieldBanish, int x, int y)
+            {
+                fieldBanish.phase = EnumBanishPhase.BanishStart;
                 fieldBanish.count = 0;
                 fieldBanishs[0] = fieldBanish;
             }

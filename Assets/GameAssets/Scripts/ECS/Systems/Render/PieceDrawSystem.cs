@@ -32,6 +32,7 @@ namespace NKPB
             NativeArray<PiecePosition> positions = m_group.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
             NativeArray<PieceState> pieceStates = m_group.ToComponentDataArray<PieceState>(Allocator.TempJob);
             NativeArray<Matrix4x4> pieceMatrixes = new NativeArray<Matrix4x4>(positions.Length + 1, Allocator.TempJob);
+
             NativeArray<int> clipNo = new NativeArray<int>(1, Allocator.TempJob);
             DrawJob job = DoDrawJob(ref inputDeps, positions, pieceMatrixes, clipNo);
 
@@ -39,6 +40,9 @@ namespace NKPB
             inputDeps.Complete();
             for (int i = 0; i < pieceMatrixes.Length - 1; i++)
             {
+                if (pieceStates[i].isBanish)
+                    continue;
+
                 Graphics.DrawMesh(GetMeshe(pieceStates[i]),
                     job.pieceMatrixes[i],
                     Shared.puzzleMeshMat.material, 0);
@@ -62,14 +66,7 @@ namespace NKPB
 
         Mesh GetMeshe(PieceState state)
         {
-            if (state.isBanish)
-            {
-                return Shared.puzzleMeshMat.meshes[$"banish_0{state.imageNo}"];
-            }
-            else
-            {
-                return Shared.puzzleMeshMat.meshes[$"piece_0{state.color}"];
-            }
+            return Shared.puzzleMeshMat.meshes[$"piece_0{state.color}"];
         }
 
         private DrawJob DoDrawJob(ref JobHandle inputDeps,

@@ -6,7 +6,7 @@ namespace NKPB
     {
         public TouchPhase phase;
         public boolean isTouch;
-        public EnumSwipeType swipeType;
+        public EnumSwipeVec swipeType;
         // public boolean isInfield;
         // public Vector2 gridPosition;
         public Vector2 startPosition;

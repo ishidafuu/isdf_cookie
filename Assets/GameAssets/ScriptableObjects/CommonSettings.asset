@@ -25,6 +25,7 @@ MonoBehaviour:
   GridOffsetX: 0
   GridOffsetY: 8
   SwipeThreshold: 2
-  BanishEndCount: 30
+  BanishEndCount: 18
   BanishImageCount: 3
   BorderSpeed: 2
+  BorderOnGridDist: 4

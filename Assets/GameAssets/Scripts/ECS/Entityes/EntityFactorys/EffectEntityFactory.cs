@@ -12,26 +12,21 @@ using UnityEditor;
 using UnityEngine.SceneManagement;
 namespace NKPB
 {
-    public static class GridEntityFactory
+    public static class EffectEntityFactory
     {
-        public static Entity CreateEntity(int _fieldId, int _gridId, EntityManager _entityManager,
+
+        public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager,
             ref MeshMatList _meshMatList
         )
         {
-            var archetype = _entityManager.CreateArchetype(ComponentTypes.GridComponentType);
+            var archetype = _entityManager.CreateArchetype(ComponentTypes.EffectComponentType);
             var entity = _entityManager.CreateEntity(archetype);
 
-            int posX = _gridId % Define.Instance.Common.GridLineLength;
-            int posY = _gridId / Define.Instance.Common.GridLineLength;
-
-            // 位置
-            _entityManager.SetComponentData(entity, new GridState
+            _entityManager.SetComponentData(entity, new EffectState
             {
-                gridId = _gridId,
-                    fieldId = _fieldId,
-                    // position = new Vector2Int(posX, posY),
-                    pieceId = _gridId
+                type = EnumEffectType.None,
             });
+
             // SharedComponentDataのセット
             _entityManager.AddSharedComponentData(entity, _meshMatList);
 

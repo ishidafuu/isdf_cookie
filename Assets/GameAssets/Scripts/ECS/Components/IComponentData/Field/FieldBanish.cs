@@ -5,8 +5,7 @@ namespace NKPB
 
     public struct FieldBanish : IComponentData
     {
-        public boolean isBanish;
-        public Vector2Int banishLine;
+        public EnumBanishPhase phase;
         public int count;
     }
 }

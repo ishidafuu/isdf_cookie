@@ -14,16 +14,6 @@ namespace NKPB
 {
     public static class FieldEntityFactory
     {
-
-        /// <summary>
-        /// キャラエンティティ作成
-        /// </summary>
-        /// <param name="i"></param>
-        /// <param name="entityManager"></param>
-        /// <param name="ariMeshMat"></param>
-        /// <param name="aniScriptSheet"></param>
-        /// <param name="aniBasePos"></param>
-        /// <returns></returns>
         public static Entity CreateEntity(int _i, EntityManager _entityManager,
             ref MeshMatList _meshMatList
         )
@@ -37,7 +27,6 @@ namespace NKPB
                 _entityManager.AddComponent(entity, ComponentType.Create<FieldScan>());
             }
 
-            // ID
             _entityManager.SetComponentData(entity, new FieldId
             {
                 fieldId = _i,
@@ -45,11 +34,10 @@ namespace NKPB
 
             _entityManager.SetComponentData(entity, new FieldBanish
             {
-                isBanish = false,
+                phase = EnumBanishPhase.None,
                     count = 0,
             });
 
-            // SharedComponentDataのセット
             _entityManager.AddSharedComponentData(entity, _meshMatList);
 
             return entity;

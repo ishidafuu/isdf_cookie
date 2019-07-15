@@ -18,8 +18,6 @@ namespace NKPB
         ComponentGroup m_group;
         Vector2 m_offset;
 
-        int cameraMag = 1;
-
         protected override void OnCreateManager()
         {
             m_group = GetComponentGroup(
@@ -30,7 +28,6 @@ namespace NKPB
         }
         protected override void OnUpdate()
         {
-            // Debug.Log("OnUpdate");
             var fieldScans = m_group.ToComponentDataArray<FieldScan>(Allocator.TempJob);
             var fieldBanishs = m_group.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
             for (int i = 0; i < fieldScans.Length; i++)
@@ -67,17 +64,8 @@ namespace NKPB
 
             Vector2 lastPosition = fieldScan.nowPosition;
             Vector2 nowPosition = pos + m_offset;
-            // bool isInfield = CheckInfield(nowPosition);
-
             fieldScan.phase = phase;
-            // fieldScan.isInfield = isInfield;
             fieldScan.nowPosition = nowPosition;
-            // fieldScan.gridPosition = (isInfield)
-            //     ? ConvertGridPosition(nowPosition)
-            //     : Vector2.zero;
-
-            // Debug.Log(nowPosition);
-
             switch (phase)
             {
                 case TouchPhase.Began:

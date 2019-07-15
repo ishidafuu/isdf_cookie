@@ -19,10 +19,9 @@ namespace NKPB
         // public static MeshMatList gridMeshMat;
         // static readonly string ShaderBg = "Sprites/DefaultSprite";
 
-        // SharedComponentDataの読み込み
         public static void ReadySharedComponentData()
         {
-            puzzleMeshMat = new MeshMatList(PathSettings.PieceSprite, PathSettings.DefaultShader);
+            puzzleMeshMat = new MeshMatList(ResourcesPathSettings.PieceSprite, ResourcesPathSettings.DefaultShader);
             // fieldMeshMat = new MeshMatList(PathSettings.FieldSprite, PathSettings.DefaultShader);
             // gridMeshMat = new MeshMatList(PathSettings.GridSprite, PathSettings.DefaultShader);
             // meterMeshMat = new MeshMatList("yyhs/bg/meter", ShaderBg);

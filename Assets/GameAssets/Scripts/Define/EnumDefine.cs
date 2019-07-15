@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace NKPB
 {
-    public enum EnumSwipeType
+    public enum EnumSwipeVec
     {
         None = 0,
         Vertical,
@@ -16,13 +16,12 @@ namespace NKPB
         Special = 1,
     }
 
-    // public enum EnumPieceMoveType
-    // {
-    //     Stop,
-    //     HoldMove,
-    //     SlipMove,
-    //     // AlignMove,
-    // }
+    public enum EnumBanishPhase
+    {
+        None,
+        BanishStart,
+        Banish,
+    }
 
     public enum EnumPieceAlignVec
     {
@@ -36,6 +35,7 @@ namespace NKPB
     public enum EnumDrawLayer
     {
         Normal,
+        EffectLayer,
         FieldLayer,
         PieceLayer,
         GridLayer,
@@ -47,5 +47,11 @@ namespace NKPB
         Hold,
         Align,
         FinishAlign,
+    }
+
+    public enum EnumEffectType
+    {
+        None,
+        Banish,
     }
 }

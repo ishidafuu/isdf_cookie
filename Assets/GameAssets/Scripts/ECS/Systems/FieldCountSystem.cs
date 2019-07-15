@@ -38,21 +38,21 @@ namespace NKPB
         struct CountJob : IJob
         {
             public ComponentDataArray<FieldBanish> fieldBanishs;
-            public int BanishEndCount;
+            [ReadOnly] public int BanishEndCount;
 
             public void Execute()
             {
                 for (int i = 0; i < fieldBanishs.Length; i++)
                 {
                     var fieldBanish = fieldBanishs[i];
-                    if (!fieldBanish.isBanish)
+                    if (fieldBanish.phase != EnumBanishPhase.Banish)
                         break;
 
                     fieldBanish.count++;
 
                     if (fieldBanish.count > BanishEndCount)
                     {
-                        fieldBanish.isBanish = false;
+                        fieldBanish.phase = EnumBanishPhase.None;
                     }
 
                     fieldBanishs[i] = fieldBanish;

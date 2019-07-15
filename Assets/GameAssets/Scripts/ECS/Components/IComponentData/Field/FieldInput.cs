@@ -7,11 +7,12 @@ namespace NKPB
     {
         public EnumFieldInputPhase phase;
         public Vector2Int gridPosition;
-        public EnumSwipeType swipeType;
+        public EnumSwipeVec swipeVec;
         public Vector2 startPosition;
         public Vector2Int distPosition;
         // public Vector2 delta;
         public EnumPieceAlignVec alignVec;
         public Vector2Int alignDelta;
+        public boolean isOnGrid;
     }
 }

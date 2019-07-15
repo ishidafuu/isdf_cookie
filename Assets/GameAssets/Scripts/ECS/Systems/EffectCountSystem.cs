@@ -12,14 +12,14 @@ namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
     [UpdateAfter(typeof(InputGroup))]
-    public class PieceCountSystem : JobComponentSystem
+    public class EffectCountSystem : JobComponentSystem
     {
-        ComponentGroup m_groupPiece;
+        ComponentGroup m_group;
 
         protected override void OnCreateManager()
         {
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PieceState>()
+            m_group = GetComponentGroup(
+                ComponentType.Create<EffectState>()
             );
         }
 
@@ -27,7 +27,7 @@ namespace NKPB
         {
             var job = new CountJob()
             {
-                pieceStates = m_groupPiece.GetComponentDataArray<PieceState>(),
+                effectStates = m_group.GetComponentDataArray<EffectState>(),
                 BanishEndCount = Define.Instance.Common.BanishEndCount,
                 BanishImageCount = Define.Instance.Common.BanishImageCount,
             };
@@ -39,32 +39,38 @@ namespace NKPB
         [BurstCompileAttribute]
         struct CountJob : IJob
         {
-            public ComponentDataArray<PieceState> pieceStates;
+            public ComponentDataArray<EffectState> effectStates;
             [ReadOnly] public int BanishEndCount;
             [ReadOnly] public int BanishImageCount;
 
             public void Execute()
             {
                 int imageFrame = (BanishEndCount / BanishImageCount);
-                for (int i = 0; i < pieceStates.Length; i++)
+                for (int i = 0; i < effectStates.Length; i++)
                 {
-                    var pieceState = pieceStates[i];
-                    if (!pieceState.isBanish)
-                        continue;
+                    var effectState = effectStates[i];
 
-                    pieceState.count++;
-                    if (pieceState.count >= BanishEndCount)
+                    switch (effectState.type)
                     {
-                        pieceState.isBanish = false;
-                        pieceState.imageNo = 0;
+                        case EnumEffectType.Banish:
+                            UpdateBanish(imageFrame, i, effectState);
+                            break;
                     }
-                    else
-                    {
-                        pieceState.imageNo = pieceState.count / imageFrame;
-                    }
-
-                    pieceStates[i] = pieceState;
                 }
+            }
+
+            private void UpdateBanish(int imageFrame, int i, EffectState effectState)
+            {
+                effectState.count++;
+                effectState.imageNo = effectState.count / imageFrame;
+
+                if (effectState.count >= BanishEndCount)
+                {
+                    effectState.type = EnumEffectType.None;
+                    effectState.imageNo = 0;
+                }
+
+                effectStates[i] = effectState;
             }
         }
     }
