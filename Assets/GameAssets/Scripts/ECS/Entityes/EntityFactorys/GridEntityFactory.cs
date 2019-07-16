@@ -22,7 +22,7 @@ namespace NKPB
             var entity = _entityManager.CreateEntity(archetype);
 
             int posX = _gridId % Define.Instance.Common.GridRowLength;
-            int posY = _gridId / Define.Instance.Common.GridColumnLength;
+            int posY = _gridId / Define.Instance.Common.GridRowLength;
 
             // 位置
             _entityManager.SetComponentData(entity, new GridState

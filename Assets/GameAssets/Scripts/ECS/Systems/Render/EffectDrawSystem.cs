@@ -77,7 +77,7 @@ namespace NKPB
             return job;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct DrawJob : IJob
         {
             public NativeArray<Matrix4x4> effectMatrixes;

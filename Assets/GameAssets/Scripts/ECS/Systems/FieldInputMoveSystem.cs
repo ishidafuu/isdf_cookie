@@ -54,7 +54,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct MoveJob : IJob
         {
             public ComponentDataArray<FieldInput> fieldInputs;

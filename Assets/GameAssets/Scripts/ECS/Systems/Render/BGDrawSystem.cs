@@ -41,7 +41,7 @@ namespace NKPB
             inputDeps.Complete();
 
             // DrawBgScroll(toukiMeters);
-            DrawFrame();
+            // DrawFrame();
             DrawGrid();
             return inputDeps;
         }

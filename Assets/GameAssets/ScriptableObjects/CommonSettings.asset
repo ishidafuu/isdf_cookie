@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FieldCount: 1
   PlayerCount: 1
-  GridRowLength: 5
+  GridRowLength: 6
   GridColumnLength: 5
-  GridSize: 16
+  GridSize: 32
   PieceColorCount: 5
   FieldOffsetX: 0
-  FieldOffsetY: -28
-  PieceOffsetX: -40
-  PieceOffsetY: -32
+  FieldOffsetY: -112
+  PieceOffsetX: -96
+  PieceOffsetY: -86
   GridOffsetX: 0
   GridOffsetY: 8
   SwipeThreshold: 2

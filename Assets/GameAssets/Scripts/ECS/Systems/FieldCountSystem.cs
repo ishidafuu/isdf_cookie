@@ -34,7 +34,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct CountJob : IJob
         {
             public ComponentDataArray<FieldBanish> fieldBanishs;

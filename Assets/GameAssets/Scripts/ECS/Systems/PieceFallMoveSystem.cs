@@ -51,7 +51,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct PieceMoveJob : IJob
         {
             public ComponentDataArray<PiecePosition> piecePositions;

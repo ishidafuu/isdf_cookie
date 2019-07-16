@@ -65,7 +65,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        [BurstCompileAttribute]
+        // [BurstCompileAttribute]
         struct CheckLineJob : IJob
         {
             public ComponentDataArray<FieldBanish> fieldBanishs;
@@ -108,22 +108,25 @@ namespace NKPB
                 if (!fieldInput.isOnGrid)
                     return;
 
+                int nextCombo = fieldBanish.combo + 1;
                 for (int x = 0; x < GridRowLength; x++)
                 {
                     for (int y = 0; y < GridColumnLength; y++)
                     {
                         checkStates[y] = pieceStates[gridStates[x + GridRowLength * y].pieceId];
                     }
-                    bool isSameColor = CheckLine(checkStates, GridColumnLength, fieldBanish.combo);
+                    bool isSameColor = CheckLine(checkStates, GridColumnLength, nextCombo);
 
                     if (isSameColor)
                     {
-                        UpdateFieldBanish(ref fieldBanish, x, 0);
-                        for (int i = 0; i < GridRowLength; i++)
+                        UpdateFieldBanish(ref fieldBanish, x, 0, nextCombo);
+                        int col = 0;
+                        for (int y = 0; y < GridColumnLength; y++)
                         {
-                            int index = gridStates[x + GridRowLength * i].pieceId;
+                            int index = gridStates[x + GridRowLength * y].pieceId;
                             PieceState pieceState = pieceStates[index];
-                            UpdatePieceStateAndEffectState(ref pieceState, i, index, fieldBanish.combo);
+                            UpdatePieceStateAndEffectState(ref pieceState, col, index, nextCombo);
+                            col++;
                         }
                     }
                 }
@@ -134,16 +137,18 @@ namespace NKPB
                     {
                         checkStates[x] = pieceStates[gridStates[x + GridRowLength * y].pieceId];
                     }
-                    bool isSameColor = CheckLine(checkStates, GridRowLength, fieldBanish.combo);
+                    bool isSameColor = CheckLine(checkStates, GridRowLength, nextCombo);
 
                     if (isSameColor)
                     {
-                        UpdateFieldBanish(ref fieldBanish, 0, y);
-                        for (int i = 0; i < GridRowLength; i++)
+                        int col = 0;
+                        UpdateFieldBanish(ref fieldBanish, 0, y, nextCombo);
+                        for (int x = 0; x < GridRowLength; x++)
                         {
-                            int index = gridStates[GridRowLength * y + i].pieceId;
+                            int index = gridStates[x + GridRowLength * y].pieceId;
                             PieceState pieceState = pieceStates[index];
-                            UpdatePieceStateAndEffectState(ref pieceState, i, index, fieldBanish.combo);
+                            UpdatePieceStateAndEffectState(ref pieceState, col, index, nextCombo);
+                            col++;
                         }
                     }
                 }
@@ -156,15 +161,14 @@ namespace NKPB
                 }
             }
 
-            private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int i, int index, int combo)
+            private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int col, int index, int combo)
             {
                 if (pieceState.isBanish)
                     return;
 
                 pieceState.isBanish = true;
-                // pieceState.count = 0;
-                //TODO:
-                pieceState.color = i;
+                pieceState.color = col;
+                pieceState.combo = combo;
                 pieceStates[index] = pieceState;
                 UpdateEffectState(piecePositions[index].gridPosition);
             }
@@ -185,16 +189,26 @@ namespace NKPB
                 }
             }
 
-            private void UpdateFieldBanish(ref FieldBanish fieldBanish, int x, int y)
+            private void UpdateFieldBanish(ref FieldBanish fieldBanish, int x, int y, int combo)
             {
                 fieldBanish.phase = EnumBanishPhase.BanishStart;
                 fieldBanish.count = 0;
-                fieldBanish.combo++;
+                fieldBanish.combo = combo;
                 fieldBanishs[0] = fieldBanish;
             }
 
             bool CheckLine(NativeArray<PieceState> checkStates, int length, int combo)
             {
+                // Debug.Log("CheckLine combo" + combo);
+                for (int i = 0; i < length; i++)
+                {
+                    if (checkStates[i].isBanish
+                        && checkStates[i].combo == combo)
+                    {
+                        return false;
+                    }
+                }
+
                 int lineBanishCount = 0;
                 for (int i = 0; i < length; i++)
                 {
@@ -235,6 +249,7 @@ namespace NKPB
                     }
                 }
 
+                // Debug.Log(combo);
                 return true;
             }
 

@@ -184,7 +184,6 @@
             <key type="filename">banish_00.png</key>
             <key type="filename">banish_01.png</key>
             <key type="filename">banish_02.png</key>
-            <key type="filename">piece_00.png</key>
             <key type="filename">piece_01.png</key>
             <key type="filename">piece_02.png</key>
             <key type="filename">piece_03.png</key>
@@ -201,19 +200,6 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">field.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>24,28,48,56</rect>
-                <key>scale9Paddings</key>
-                <rect>24,28,48,56</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
             <key type="filename">grid.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
@@ -227,19 +213,113 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">piece_00.png</key>
+            <key type="filename">piece_05.png</key>
+            <key type="filename">piece_06.png</key>
+            <key type="filename">piece_07.png</key>
+            <key type="filename">piece_08.png</key>
+            <key type="filename">piece_09.png</key>
+            <key type="filename">piece_10.png</key>
+            <key type="filename">piece_11.png</key>
+            <key type="filename">piece_12.png</key>
+            <key type="filename">piece_13.png</key>
+            <key type="filename">piece_14.png</key>
+            <key type="filename">piece_15.png</key>
+            <key type="filename">piece_16.png</key>
+            <key type="filename">piece_17.png</key>
+            <key type="filename">piece_18.png</key>
+            <key type="filename">piece_19.png</key>
+            <key type="filename">piece_20.png</key>
+            <key type="filename">piece_21.png</key>
+            <key type="filename">piece_22.png</key>
+            <key type="filename">piece_23.png</key>
+            <key type="filename">piece_24.png</key>
+            <key type="filename">piece_25.png</key>
+            <key type="filename">piece_26.png</key>
+            <key type="filename">piece_27.png</key>
+            <key type="filename">piece_28.png</key>
+            <key type="filename">piece_29.png</key>
+            <key type="filename">piece_30.png</key>
+            <key type="filename">piece_31.png</key>
+            <key type="filename">piece_32.png</key>
+            <key type="filename">piece_33.png</key>
+            <key type="filename">piece_34.png</key>
+            <key type="filename">piece_35.png</key>
+            <key type="filename">piece_36.png</key>
+            <key type="filename">piece_37.png</key>
+            <key type="filename">piece_38.png</key>
+            <key type="filename">piece_39.png</key>
+            <key type="filename">piece_40.png</key>
+            <key type="filename">piece_41.png</key>
+            <key type="filename">piece_42.png</key>
+            <key type="filename">piece_43.png</key>
+            <key type="filename">piece_44.png</key>
+            <key type="filename">piece_45.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0,1</point_f>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>8,8,16,16</rect>
+                <key>scale9Paddings</key>
+                <rect>8,8,16,16</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
         </map>
         <key>fileList</key>
         <array>
             <filename>banish_00.png</filename>
             <filename>banish_01.png</filename>
             <filename>banish_02.png</filename>
-            <filename>field.png</filename>
             <filename>grid.png</filename>
-            <filename>piece_00.png</filename>
             <filename>piece_01.png</filename>
             <filename>piece_02.png</filename>
             <filename>piece_03.png</filename>
             <filename>piece_04.png</filename>
+            <filename>piece_05.png</filename>
+            <filename>piece_06.png</filename>
+            <filename>piece_07.png</filename>
+            <filename>piece_08.png</filename>
+            <filename>piece_09.png</filename>
+            <filename>piece_10.png</filename>
+            <filename>piece_11.png</filename>
+            <filename>piece_12.png</filename>
+            <filename>piece_13.png</filename>
+            <filename>piece_14.png</filename>
+            <filename>piece_15.png</filename>
+            <filename>piece_16.png</filename>
+            <filename>piece_17.png</filename>
+            <filename>piece_18.png</filename>
+            <filename>piece_19.png</filename>
+            <filename>piece_20.png</filename>
+            <filename>piece_21.png</filename>
+            <filename>piece_22.png</filename>
+            <filename>piece_23.png</filename>
+            <filename>piece_24.png</filename>
+            <filename>piece_25.png</filename>
+            <filename>piece_26.png</filename>
+            <filename>piece_27.png</filename>
+            <filename>piece_28.png</filename>
+            <filename>piece_29.png</filename>
+            <filename>piece_30.png</filename>
+            <filename>piece_31.png</filename>
+            <filename>piece_32.png</filename>
+            <filename>piece_33.png</filename>
+            <filename>piece_34.png</filename>
+            <filename>piece_35.png</filename>
+            <filename>piece_36.png</filename>
+            <filename>piece_37.png</filename>
+            <filename>piece_38.png</filename>
+            <filename>piece_39.png</filename>
+            <filename>piece_40.png</filename>
+            <filename>piece_41.png</filename>
+            <filename>piece_42.png</filename>
+            <filename>piece_43.png</filename>
+            <filename>piece_44.png</filename>
+            <filename>piece_45.png</filename>
+            <filename>piece_00.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

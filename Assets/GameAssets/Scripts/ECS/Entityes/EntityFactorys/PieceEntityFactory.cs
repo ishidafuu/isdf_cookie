@@ -28,7 +28,7 @@ namespace NKPB
             });
 
             int gridPosX = _pieceId % Define.Instance.Common.GridRowLength;
-            int gridPosY = _pieceId / Define.Instance.Common.GridColumnLength;
+            int gridPosY = _pieceId / Define.Instance.Common.GridRowLength;
             int posX = gridPosX * Define.Instance.Common.GridSize;
             int posY = gridPosY * Define.Instance.Common.GridSize;
 

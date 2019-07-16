@@ -12,7 +12,18 @@ public class ImportProcess : AssetPostprocessor
         importer.textureCompression = TextureImporterCompression.Compressed;
         importer.filterMode = FilterMode.Point;
         importer.spritePixelsPerUnit = 1;
+
         importer.textureCompression = TextureImporterCompression.Uncompressed;
+
+        TextureImporterSettings textureSettings = new TextureImporterSettings();
+        if (textureSettings.spriteMeshType != SpriteMeshType.FullRect)
+        {
+            textureSettings.spriteMeshType = SpriteMeshType.FullRect;
+            // importer.SetTextureSettings(textureSettings);
+            // importer.SaveAndReimport();
+        }
+        importer.ReadTextureSettings(textureSettings);
+
         // //ここからはインポートするテクスチャがどのフォルダ内にあるかで処理を変える
         // if (importer.assetPath.Contains("Character"))
         // {
