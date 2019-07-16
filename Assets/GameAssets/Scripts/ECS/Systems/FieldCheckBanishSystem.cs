@@ -40,6 +40,9 @@ namespace NKPB
             m_groupGrid.AddDependency(inputDeps);
             m_groupEffect.AddDependency(inputDeps);
 
+            int checkLength = Mathf.Max(Define.Instance.Common.GridRowLength, Define.Instance.Common.GridColumnLength);
+            NativeArray<PieceState> checkStates = new NativeArray<PieceState>(checkLength, Allocator.TempJob);
+
             var job = new CheckLineJob()
             {
                 fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
@@ -51,32 +54,37 @@ namespace NKPB
                 gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
 
                 effectStates = m_groupEffect.GetComponentDataArray<EffectState>(),
-
+                checkStates = checkStates,
                 GridSize = Define.Instance.Common.GridSize,
-                GridLineLength = Define.Instance.Common.GridRowLength,
+                GridRowLength = Define.Instance.Common.GridRowLength,
+                GridColumnLength = Define.Instance.Common.GridColumnLength,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+            checkStates.Dispose();
             return inputDeps;
         }
 
-        // [BurstCompileAttribute]
+        [BurstCompileAttribute]
         struct CheckLineJob : IJob
         {
             public ComponentDataArray<FieldBanish> fieldBanishs;
             public ComponentDataArray<PieceState> pieceStates;
             public ComponentDataArray<EffectState> effectStates;
+            public NativeArray<PieceState> checkStates;
+
             [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
             [ReadOnly] public ComponentDataArray<FieldInput> fieldInputs;
             [ReadOnly] public ComponentDataArray<GridState> gridStates;
             [ReadOnly] public int GridSize;
-            [ReadOnly] public int GridLineLength;
+            [ReadOnly] public int GridRowLength;
+            [ReadOnly] public int GridColumnLength;
             [ReadOnly] int FieldSize;
 
             public void Execute()
             {
                 var fieldBanish = fieldBanishs[0];
-                DebugPanel.Log($"fieldBanish.phase", fieldBanish.phase.ToString());
+                // DebugPanel.Log($"fieldBanish.phase", fieldBanish.phase.ToString());
                 switch (fieldBanish.phase)
                 {
                     case EnumBanishPhase.BanishStart:
@@ -100,44 +108,42 @@ namespace NKPB
                 if (!fieldInput.isOnGrid)
                     return;
 
-                for (int x = 0; x < GridLineLength; x++)
+                for (int x = 0; x < GridRowLength; x++)
                 {
-                    bool isSameColor = CheckColor(
-                        pieceStates[gridStates[x + GridLineLength * 0].pieceId],
-                        pieceStates[gridStates[x + GridLineLength * 1].pieceId],
-                        pieceStates[gridStates[x + GridLineLength * 2].pieceId],
-                        pieceStates[gridStates[x + GridLineLength * 3].pieceId],
-                        pieceStates[gridStates[x + GridLineLength * 4].pieceId]);
+                    for (int y = 0; y < GridColumnLength; y++)
+                    {
+                        checkStates[y] = pieceStates[gridStates[x + GridRowLength * y].pieceId];
+                    }
+                    bool isSameColor = CheckLine(checkStates, GridColumnLength, fieldBanish.combo);
 
                     if (isSameColor)
                     {
                         UpdateFieldBanish(ref fieldBanish, x, 0);
-                        for (int i = 0; i < GridLineLength; i++)
+                        for (int i = 0; i < GridRowLength; i++)
                         {
-                            int index = gridStates[x + GridLineLength * i].pieceId;
+                            int index = gridStates[x + GridRowLength * i].pieceId;
                             PieceState pieceState = pieceStates[index];
-                            UpdatePieceStateAndEffectState(ref pieceState, i, index);
+                            UpdatePieceStateAndEffectState(ref pieceState, i, index, fieldBanish.combo);
                         }
                     }
                 }
 
-                for (int y = 0; y < GridLineLength; y++)
+                for (int y = 0; y < GridColumnLength; y++)
                 {
-                    bool isSameColor = CheckColor(
-                        pieceStates[gridStates[GridLineLength * y + 0].pieceId],
-                        pieceStates[gridStates[GridLineLength * y + 1].pieceId],
-                        pieceStates[gridStates[GridLineLength * y + 2].pieceId],
-                        pieceStates[gridStates[GridLineLength * y + 3].pieceId],
-                        pieceStates[gridStates[GridLineLength * y + 4].pieceId]);
+                    for (int x = 0; x < GridRowLength; x++)
+                    {
+                        checkStates[x] = pieceStates[gridStates[x + GridRowLength * y].pieceId];
+                    }
+                    bool isSameColor = CheckLine(checkStates, GridRowLength, fieldBanish.combo);
 
                     if (isSameColor)
                     {
                         UpdateFieldBanish(ref fieldBanish, 0, y);
-                        for (int i = 0; i < GridLineLength; i++)
+                        for (int i = 0; i < GridRowLength; i++)
                         {
-                            int index = gridStates[GridLineLength * y + i].pieceId;
+                            int index = gridStates[GridRowLength * y + i].pieceId;
                             PieceState pieceState = pieceStates[index];
-                            UpdatePieceStateAndEffectState(ref pieceState, i, index);
+                            UpdatePieceStateAndEffectState(ref pieceState, i, index, fieldBanish.combo);
                         }
                     }
                 }
@@ -145,17 +151,18 @@ namespace NKPB
                 if (fieldBanish.phase == EnumBanishPhase.BanishEnd)
                 {
                     fieldBanish.phase = EnumBanishPhase.FallStart;
+                    fieldBanish.combo = 0;
                     fieldBanishs[0] = fieldBanish;
                 }
             }
 
-            private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int i, int index)
+            private void UpdatePieceStateAndEffectState(ref PieceState pieceState, int i, int index, int combo)
             {
                 if (pieceState.isBanish)
                     return;
 
                 pieceState.isBanish = true;
-                pieceState.count = 0;
+                // pieceState.count = 0;
                 //TODO:
                 pieceState.color = i;
                 pieceStates[index] = pieceState;
@@ -182,49 +189,51 @@ namespace NKPB
             {
                 fieldBanish.phase = EnumBanishPhase.BanishStart;
                 fieldBanish.count = 0;
+                fieldBanish.combo++;
                 fieldBanishs[0] = fieldBanish;
             }
 
-            bool CheckColor(PieceState st0, PieceState st1, PieceState st2, PieceState st3, PieceState st4)
+            bool CheckLine(NativeArray<PieceState> checkStates, int length, int combo)
             {
-
-                if (st0.isBanish && st1.isBanish && st2.isBanish && st3.isBanish && st4.isBanish)
+                int lineBanishCount = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    if (checkStates[i].isBanish
+                        && checkStates[i].combo < combo)
+                    {
+                        lineBanishCount++;
+                    }
+                }
+                if (lineBanishCount >= (length - 1))
                     return false;
 
-                if (!st0.isBanish && st0.type != EnumPieceType.Normal)
-                    return false;
-                if (!st1.isBanish && st1.type != EnumPieceType.Normal)
-                    return false;
-                if (!st2.isBanish && st2.type != EnumPieceType.Normal)
-                    return false;
-                if (!st3.isBanish && st3.type != EnumPieceType.Normal)
-                    return false;
-                if (!st4.isBanish && st4.type != EnumPieceType.Normal)
-                    return false;
+                for (int i = 0; i < length; i++)
+                {
+                    if (!checkStates[i].isBanish
+                        && checkStates[i].type != EnumPieceType.Normal)
+                    {
+                        return false;
+                    }
+                }
 
                 int lineColor = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    if (!checkStates[i].isBanish)
+                    {
+                        lineColor = checkStates[i].color;
+                        break;
+                    }
+                }
 
-                if (!st0.isBanish)
-                    lineColor = st0.color;
-                else if (!st1.isBanish)
-                    lineColor = st1.color;
-                else if (!st2.isBanish)
-                    lineColor = st2.color;
-                else if (!st3.isBanish)
-                    lineColor = st3.color;
-                else if (!st4.isBanish)
-                    lineColor = st4.color;
-
-                if (!st0.isBanish && st0.color != lineColor)
-                    return false;
-                if (!st1.isBanish && st1.color != lineColor)
-                    return false;
-                if (!st2.isBanish && st2.color != lineColor)
-                    return false;
-                if (!st3.isBanish && st3.color != lineColor)
-                    return false;
-                if (!st4.isBanish && st4.color != lineColor)
-                    return false;
+                for (int i = 0; i < length; i++)
+                {
+                    if (!checkStates[i].isBanish
+                        && lineColor != checkStates[i].color)
+                    {
+                        return false;
+                    }
+                }
 
                 return true;
             }

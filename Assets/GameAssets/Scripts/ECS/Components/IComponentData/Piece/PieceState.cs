@@ -8,7 +8,8 @@ namespace NKPB
         public EnumPieceType type;
         public int color;
         public boolean isBanish;
-        public int count;
-        public int imageNo;
+        public int combo;
+        // public int count;
+        // public int imageNo;
     }
 }

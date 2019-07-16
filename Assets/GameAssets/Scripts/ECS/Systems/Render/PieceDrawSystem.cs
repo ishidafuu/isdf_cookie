@@ -28,9 +28,6 @@ namespace NKPB
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             m_group.AddDependency(inputDeps);
-
-            // NativeArray<PiecePosition> positions = m_group.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
-            // NativeArray<PieceState> pieceStates = m_group.ToComponentDataArray<PieceState>(Allocator.TempJob);
             ComponentDataArray<PieceState> pieceStates = m_group.GetComponentDataArray<PieceState>();
             NativeArray<Matrix4x4> pieceMatrixes = new NativeArray<Matrix4x4>(Define.Instance.Common.PieceCount + 1, Allocator.TempJob);
 

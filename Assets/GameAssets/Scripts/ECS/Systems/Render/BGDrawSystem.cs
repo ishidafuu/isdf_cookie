@@ -8,21 +8,20 @@ using UnityEngine.Experimental.PlayerLoop;
 
 namespace NKPB
 {
-
     [UpdateInGroup(typeof(RenderGroup))]
     [UpdateAfter(typeof(CountGroup))]
     [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
     public class BGDrawSystem : JobComponentSystem
     {
-        ComponentGroup m_group;
+        // ComponentGroup m_group;
         Quaternion m_quaternion;
         Vector3 m_fieldPosition;
         Vector3 m_gridPosition;
         protected override void OnCreateManager()
         {
-            m_group = GetComponentGroup(
-                ComponentType.ReadOnly<FieldId>()
-            );
+            // m_group = GetComponentGroup(
+            //     ComponentType.ReadOnly<FieldId>()
+            // );
             m_quaternion = Quaternion.Euler(new Vector3(-90, 0, 0));
 
             m_fieldPosition = new Vector3(Define.Instance.Common.FieldOffsetX,
@@ -36,7 +35,7 @@ namespace NKPB
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_group.AddDependency(inputDeps);
+            // m_group.AddDependency(inputDeps);
 
             // 描画のためCompleteする
             inputDeps.Complete();

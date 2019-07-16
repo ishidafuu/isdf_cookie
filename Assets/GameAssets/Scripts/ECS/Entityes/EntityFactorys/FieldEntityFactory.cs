@@ -27,11 +27,6 @@ namespace NKPB
                 _entityManager.AddComponent(entity, ComponentType.Create<FieldScan>());
             }
 
-            _entityManager.SetComponentData(entity, new FieldId
-            {
-                fieldId = _i,
-            });
-
             _entityManager.SetComponentData(entity, new FieldBanish
             {
                 phase = EnumBanishPhase.None,

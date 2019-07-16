@@ -42,6 +42,11 @@ namespace NKPB
                 GridSize = Define.Instance.Common.GridSize,
                 BorderSpeed = Define.Instance.Common.BorderSpeed,
                 BorderOnGridDist = Define.Instance.Common.BorderOnGridDist,
+                PixelSize = Define.Instance.PixelSize,
+                FieldWidth = Define.Instance.Common.FieldWidth,
+                FieldHeight = Define.Instance.Common.FieldHeight,
+                offsetConvertPositionX = m_offsetConvertPositionX,
+                offsetConvertPositionY = m_offsetConvertPositionY,
             };
 
             inputDeps = job.Schedule(inputDeps);
@@ -49,7 +54,7 @@ namespace NKPB
             return inputDeps;
         }
 
-        // [BurstCompileAttribute]
+        [BurstCompileAttribute]
         struct MoveJob : IJob
         {
             public ComponentDataArray<FieldInput> fieldInputs;
@@ -59,6 +64,11 @@ namespace NKPB
             [ReadOnly] public int GridSize;
             [ReadOnly] public int BorderSpeed;
             [ReadOnly] public int BorderOnGridDist;
+            [ReadOnly] public int PixelSize;
+            [ReadOnly] public int FieldWidth;
+            [ReadOnly] public int FieldHeight;
+            [ReadOnly] public int offsetConvertPositionX;
+            [ReadOnly] public int offsetConvertPositionY;
 
             public void Execute()
             {
@@ -70,7 +80,7 @@ namespace NKPB
                     var fieldBanish = fieldBanishs[i];
 
                     Vector2Int gamePosition = ConvertPosition(fieldScan.nowPosition);
-                    DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
+                    // DebugPanel.Log($"fieldInput.phase", fieldInput.phase.ToString());
 
                     if (fieldBanish.phase == EnumBanishPhase.BanishStart)
                     {
@@ -141,10 +151,10 @@ namespace NKPB
                 DecideSwipeVec(ref fieldInput, distPosition);
 
                 fieldInput.distPosition = new Vector2Int(
-                    (int)(distPosition.x / Define.Instance.PixelSize),
-                    (int)(distPosition.y / Define.Instance.PixelSize));
+                    (int)(distPosition.x / PixelSize),
+                    (int)(distPosition.y / PixelSize));
                 fieldInput.isOnGrid = CheckOnGrid(fieldInput.distPosition, fieldInput.swipeVec);
-                DebugPanel.Log($"fieldInput.isOnGrid", fieldInput.isOnGrid.ToString());
+                // DebugPanel.Log($"fieldInput.isOnGrid", fieldInput.isOnGrid.ToString());
                 fieldInputs[i] = fieldInput;
             }
 
@@ -153,7 +163,7 @@ namespace NKPB
                 if (swipeType == EnumSwipeVec.Horizontal)
                 {
                     int posX = Mathf.Abs(position.x) % GridSize;
-                    DebugPanel.Log($"posX", posX.ToString());
+                    // DebugPanel.Log($"posX", posX.ToString());
                     return (posX < BorderOnGridDist) || (GridSize - posX < BorderOnGridDist);
                 }
                 else if (swipeType == EnumSwipeVec.Vertical)
@@ -184,23 +194,22 @@ namespace NKPB
 
             private Vector2Int ConvertPosition(Vector2 scanPosition)
             {
-                int x = (int)(scanPosition.x / Define.Instance.PixelSize) + m_offsetConvertPositionX;
-                int y = (int)(scanPosition.y / Define.Instance.PixelSize) + m_offsetConvertPositionY;
+                int x = (int)(scanPosition.x / PixelSize) + offsetConvertPositionX;
+                int y = (int)(scanPosition.y / PixelSize) + offsetConvertPositionY;
                 return new Vector2Int(x, y);
             }
 
-            private static bool CheckInfield(Vector2Int position)
+            private bool CheckInfield(Vector2Int position)
             {
-                float size = Define.Instance.Common.GridSize * Define.Instance.Common.GridRowLength;
-                return ((position.x > 0 && position.x < size)
-                    && (position.y > 0 && position.y < size));
+                return ((position.x > 0 && position.x < FieldWidth)
+                    && (position.y > 0 && position.y < FieldHeight));
             }
 
-            private static Vector2Int ConvertGridPosition(Vector2Int position)
+            private Vector2Int ConvertGridPosition(Vector2Int position)
             {
                 return new Vector2Int(
-                    (position.x / Define.Instance.Common.GridSize),
-                    (position.y / Define.Instance.Common.GridSize));
+                    (position.x / GridSize),
+                    (position.y / GridSize));
             }
 
             private void UpdateAlign(int i, FieldScan fieldScan, FieldInput fieldInput, Vector2Int gamePosition)
