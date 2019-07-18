@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,11 +18,13 @@ namespace NKPB
         List<Entity> m_playerEntityList = new List<Entity>();
 
         [SerializeField]
-        PixelPerfectCamera pixelPerfectCamera;
+        PixelPerfectCamera m_pixelPerfectCamera;
 
         void Start()
         {
-            Define.Instance.SetPixelSize(Screen.width / pixelPerfectCamera.refResolutionX);
+            FireBaseManager.Init();
+
+            Define.Instance.SetPixelSize(Screen.width / m_pixelPerfectCamera.refResolutionX);
 
             var scene = SceneManager.GetActiveScene();
             if (scene.name != SCENE_NAME)
@@ -30,6 +36,26 @@ namespace NKPB
             ComponentCache();
             InitializeEntities(manager);
         }
+
+        void OnDestroy()
+        {
+            // if (FirebaseApp.DefaultInstance != null)
+            // {
+            //     FirebaseApp.DefaultInstance.Dispose();
+            // }
+        }
+
+        // private List<UserScore> ParseValidUserScoreRecords(
+        //     DataSnapshot snapshot,
+        //     long startTS,
+        //     long endTS)
+        // {
+        //     return snapshot.Children
+        //         .Select(scoreRecord => UserScore.CreateScoreFromRecord(scoreRecord))
+        //         .Where(score => score != null && score.Timestamp > startTS && score.Timestamp <= endTS)
+        //         .Reverse()
+        //         .ToList();
+        // }
 
         EntityManager InitializeWorld()
         {

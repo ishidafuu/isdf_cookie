@@ -14,18 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FieldCount: 1
   PlayerCount: 1
-  GridRowLength: 6
-  GridColumnLength: 5
+  GridRowLength: 5
+  GridColumnLength: 6
   GridSize: 32
   PieceColorCount: 5
   FieldOffsetX: 0
-  FieldOffsetY: -112
-  PieceOffsetX: -96
+  FieldOffsetY: -64
+  PieceOffsetX: -80
   PieceOffsetY: -86
   GridOffsetX: 0
   GridOffsetY: 8
-  SwipeThreshold: 2
+  SwipeThreshold: 4
   BanishEndCount: 18
   BanishImageCount: 3
   BorderSpeed: 2
-  BorderOnGridDist: 4
+  BorderOnGridDist: 8
