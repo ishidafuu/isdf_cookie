@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "505191558931",
+    "firebase_url": "https://isdfcookie.firebaseio.com",
+    "project_id": "isdfcookie",
+    "storage_bucket": "isdfcookie.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505191558931:android:ef89bc9231fa9475",
+        "android_client_info": {
+          "package_name": "com.ishidafuu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "505191558931-72brq3p8p21sgfhm4b2e8tk06fh8hh3k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAePebUZkQ4gRLwdEp4zSMLb52WtfUzmuU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "505191558931-72brq3p8p21sgfhm4b2e8tk06fh8hh3k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
