@@ -8,7 +8,6 @@ public class RoomModel
     public static readonly string HostId = "hostId";
     public static readonly string GuestId = "guestId";
     public static readonly string Phase = "phase";
-    // public static readonly string IsHostReady = "isHostReady";
     public static readonly string IsGuestReady = "isGuestReady";
 
     public string hostId;
