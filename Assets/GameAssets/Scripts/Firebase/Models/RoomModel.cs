@@ -15,10 +15,10 @@ public class RoomModel
     public int phase;
     public bool isGuestReady;
 
-    public RoomModel(string userId)
+    public RoomModel(string hostUserId, string guestUserId)
     {
-        this.hostId = userId;
-        this.guestId = string.Empty;
+        this.hostId = hostUserId;
+        this.guestId = guestUserId;
         this.phase = 0;
         this.isGuestReady = false;
     }

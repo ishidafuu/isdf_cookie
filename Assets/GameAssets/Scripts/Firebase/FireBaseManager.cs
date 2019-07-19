@@ -30,20 +30,22 @@ namespace NKPB
 
             m_users.Init(m_referenceRoot);
             m_myUser.Init(m_referenceRoot, "isdf");
-            m_users.SearchWaitingUser(MakeRoom, WaitRoom);
+            RemoveLastRoom();
         }
 
         static void MakeRoom(Dictionary<string, object> result)
         {
-            m_myRoom.InitHost(m_referenceRoot, m_myUser.GetUserId());
+            UserModel updateTarget = new UserModel(result.Values.First());
+            string targetId = result.Keys.First();
+
+            m_myRoom.InitHost(m_referenceRoot, m_myUser.GetUserId(), targetId);
             m_myUser.UpdateMyUser(false, m_myRoom.GetRoomId());
             m_myBattle.Init(m_referenceRoot, m_myRoom.GetRoomId(), m_myUser.GetUserId());
 
-            UserModel updateTarget = new UserModel(result.Values.First());
+            SetTargetUserAndBattle(targetId);
             m_targetUser.UpdateGuestData(updateTarget, m_myRoom.GetRoomId());
 
-            string targetId = result.Keys.First();
-            SetTargetUserAndBattle(targetId);
+            PutBattleData("", 0);
         }
 
         static void WaitRoom()
@@ -56,6 +58,7 @@ namespace NKPB
         {
             m_myRoom.InitGuest(m_referenceRoot, roomId, SetTargetUserAndBattle);
             m_myBattle.Init(m_referenceRoot, m_myRoom.GetRoomId(), m_myUser.GetUserId());
+            PutBattleData("", 0);
         }
 
         static void SetTargetUserAndBattle(string targetId)
@@ -64,5 +67,57 @@ namespace NKPB
             m_targetBattle.Init(m_referenceRoot, m_myRoom.GetRoomId(), targetId);
         }
 
+        public static void PutBattleData(string fieldData, int attackData)
+        {
+            m_myBattle.PutBattleData(fieldData, attackData);
+        }
+
+        public static void RemoveLastRoom()
+        {
+            m_referenceRoot
+                .Child(FBConstants.Rooms)
+                .Child(m_myUser.GetUserId())
+                .RemoveValueAsync()
+                .ContinueWith((System.Action<System.Threading.Tasks.Task>)(task =>
+                {
+                    if (task.Exception != null)
+                    {
+                        Debug.LogError(task.Exception);
+                    }
+                    else if (task.IsCompleted)
+                    {
+                        RemoveLastBattle();
+                    }
+                    else
+                    {
+                        Debug.LogWarning(task);
+                    }
+                }));
+
+        }
+
+        public static void RemoveLastBattle()
+        {
+            m_referenceRoot
+                .Child(FBConstants.Battles)
+                .Child(m_myUser.GetUserId())
+                .RemoveValueAsync()
+                .ContinueWith((System.Action<System.Threading.Tasks.Task>)(task =>
+                {
+                    if (task.Exception != null)
+                    {
+                        Debug.LogError(task.Exception);
+                    }
+                    else if (task.IsCompleted)
+                    {
+                        m_users.SearchWaitingUser(MakeRoom, WaitRoom);
+                    }
+                    else
+                    {
+                        Debug.LogWarning(task);
+                    }
+                }));
+
+        }
     }
 }

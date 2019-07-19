@@ -11,7 +11,6 @@ public class UserModel
     public string userName;
     public bool isWaiting;
     public string roomId;
-    public string targetId;
 
     public UserModel(string username, bool isWaiting, string roomId)
     {
@@ -29,12 +28,6 @@ public class UserModel
             this.isWaiting = dict.ContainsKey(IsWaiting) ? (bool)dict[IsWaiting] : false;
             this.roomId = dict.ContainsKey(RoomId) ? dict[RoomId].ToString() : string.Empty;
         }
-        // else
-        // {
-        //     this.userName = string.Empty;
-        //     this.isWaiting = false;
-        //     this.roomId = string.Empty;
-        // }
     }
 
     public string ToJson()

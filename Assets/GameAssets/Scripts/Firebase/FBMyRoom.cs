@@ -22,11 +22,11 @@ namespace NKPB
         public bool IsHost() => m_isHost;
         public bool IsReady() => m_isHost;
 
-        public void InitHost(DatabaseReference referenceRoot, string hostsUserId)
+        public void InitHost(DatabaseReference referenceRoot, string hostsUserId, string guestUserId)
         {
-            Init(referenceRoot, true, System.Guid.NewGuid().ToString());
+            Init(referenceRoot, true, hostsUserId);
 
-            RoomModel room = new RoomModel(hostsUserId);
+            RoomModel room = new RoomModel(hostsUserId, guestUserId);
             string json = JsonUtility.ToJson(room);
             m_referenceMyRoom.SetRawJsonValueAsync(json);
             m_referenceMyRoom.ChildChanged += OnHostMyRoomChildChanged;
@@ -64,7 +64,6 @@ namespace NKPB
                 {
                     if ((bool)args.Snapshot.GetValue(true))
                     {
-                        // SetNewBattle();
                         m_isReady = true;
                     }
                 }
