@@ -11,33 +11,37 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
-    [UpdateAfter(typeof(FieldMoveGroup))]
+    // [UpdateAfter(typeof(FieldMoveGroup))]
     public class FieldCountSystem : JobComponentSystem
     {
-        ComponentGroup m_group;
+        EntityQuery m_query;
 
         protected override void OnCreateManager()
         {
-            m_group = GetComponentGroup(
-                ComponentType.Create<FieldBanish>());
+            m_query = GetEntityQuery(
+                ComponentType.ReadWrite<FieldBanish>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            NativeArray<FieldBanish> fieldBanishs = m_query.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
             var job = new CountJob()
             {
-                fieldBanishs = m_group.GetComponentDataArray<FieldBanish>(),
-                BanishEndCount = Define.Instance.Common.BanishEndCount,
+                fieldBanishs = fieldBanishs,
+                BanishEndCount = Settings.Instance.Common.BanishEndCount,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+
+            m_query.CopyFromComponentDataArray(job.fieldBanishs);
+            fieldBanishs.Dispose();
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct CountJob : IJob
         {
-            public ComponentDataArray<FieldBanish> fieldBanishs;
+            public NativeArray<FieldBanish> fieldBanishs;
             [ReadOnly] public int BanishEndCount;
 
             public void Execute()

@@ -11,52 +11,61 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(PieceMoveGroup))]
-    [UpdateAfter(typeof(CountGroup))]
+    // [UpdateAfter(typeof(CountGroup))]
     public class PieceFallMoveSystem : JobComponentSystem
     {
-        ComponentGroup m_groupField;
-        ComponentGroup m_groupPiece;
-        // ComponentGroup m_groupGrid;
+        EntityQuery m_queryField;
+        EntityQuery m_queryPiece;
+        // EntityQuery m_queryGrid;
 
         protected override void OnCreateManager()
         {
-            m_groupField = GetComponentGroup(
-                ComponentType.Create<FieldBanish>()
+            m_queryField = GetEntityQuery(
+                ComponentType.ReadWrite<FieldBanish>()
             );
-            // m_groupGrid = GetComponentGroup(
-            //     ComponentType.Create<GridState>()
+            // m_queryGrid = GetEntityQuery(
+            //     ComponentType.ReadWrite<GridState>()
             // );
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PiecePosition>()
+            m_queryPiece = GetEntityQuery(
+                ComponentType.ReadWrite<PiecePosition>()
             );
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_groupField.AddDependency(inputDeps);
-            // m_groupGrid.AddDependency(inputDeps);
-            m_groupPiece.AddDependency(inputDeps);
-            var moveJob = new PieceMoveJob()
+            m_queryField.AddDependency(inputDeps);
+            // m_queryGrid.AddDependency(inputDeps);
+            m_queryPiece.AddDependency(inputDeps);
+
+            NativeArray<PiecePosition> piecePositions = m_queryPiece.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
+            NativeArray<FieldBanish> fieldBanishs = m_queryField.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
+            var job = new PieceMoveJob()
             {
-                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
-                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
-                GridSize = Define.Instance.Common.GridSize,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridColumnLength = Define.Instance.Common.GridColumnLength,
-                BorderSpeed = Define.Instance.Common.BorderSpeed,
+                fieldBanishs = fieldBanishs,
+                piecePositions = piecePositions,
+                GridSize = Settings.Instance.Common.GridSize,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridColumnLength = Settings.Instance.Common.GridColumnLength,
+                BorderSpeed = Settings.Instance.Common.BorderSpeed,
             };
 
-            inputDeps = moveJob.Schedule(inputDeps);
+            inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+
+            m_queryPiece.CopyFromComponentDataArray(job.piecePositions);
+            m_queryField.CopyFromComponentDataArray(job.fieldBanishs);
+
+            piecePositions.Dispose();
+            fieldBanishs.Dispose();
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct PieceMoveJob : IJob
         {
-            public ComponentDataArray<PiecePosition> piecePositions;
-            public ComponentDataArray<FieldBanish> fieldBanishs;
-            // [ReadOnly] public ComponentDataArray<GridState> gridStates;
+            public NativeArray<PiecePosition> piecePositions;
+            public NativeArray<FieldBanish> fieldBanishs;
+            // [ReadOnly] public NativeArray<GridState> gridStates;
             [ReadOnly] public int GridSize;
             [ReadOnly] public int GridRowLength;
             [ReadOnly] public int GridColumnLength;

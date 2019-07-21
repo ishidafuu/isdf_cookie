@@ -9,16 +9,16 @@ using UnityEngine.Experimental.PlayerLoop;
 namespace NKPB
 {
     [UpdateInGroup(typeof(RenderGroup))]
-    [UpdateAfter(typeof(CountGroup))]
-    [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
+    // [UpdateAfter(typeof(CountGroup))]
+    // [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
     public class EffectDrawSystem : JobComponentSystem
     {
-        ComponentGroup m_group;
+        EntityQuery m_query;
         Quaternion m_quaternion;
 
         protected override void OnCreateManager()
         {
-            m_group = GetComponentGroup(
+            m_query = GetEntityQuery(
                 ComponentType.ReadOnly<EffectState>()
             );
             m_quaternion = Quaternion.Euler(new Vector3(-90, 0, 0));
@@ -26,9 +26,9 @@ namespace NKPB
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_group.AddDependency(inputDeps);
+            m_query.AddDependency(inputDeps);
 
-            NativeArray<EffectState> effectStates = m_group.ToComponentDataArray<EffectState>(Allocator.TempJob);
+            NativeArray<EffectState> effectStates = m_query.ToComponentDataArray<EffectState>(Allocator.TempJob);
             NativeArray<Matrix4x4> effectMatrixes = new NativeArray<Matrix4x4>(effectStates.Length, Allocator.TempJob);
             DrawJob job = DoDrawJob(ref inputDeps, effectStates, effectMatrixes);
 
@@ -64,16 +64,16 @@ namespace NKPB
                 effectStates = effectStates,
                 one = Vector3.one,
                 q = m_quaternion,
-                FieldOffsetX = Define.Instance.Common.FieldOffsetX,
-                FieldOffsetY = Define.Instance.Common.FieldOffsetY,
-                PieceOffsetX = Define.Instance.Common.PieceOffsetX,
-                PieceOffsetY = Define.Instance.Common.PieceOffsetY,
+                FieldOffsetX = Settings.Instance.Common.FieldOffsetX,
+                FieldOffsetY = Settings.Instance.Common.FieldOffsetY,
+                PieceOffsetX = Settings.Instance.Common.PieceOffsetX,
+                PieceOffsetY = Settings.Instance.Common.PieceOffsetY,
                 // GridSize = Define.Instance.Common.GridSize,
                 // GridLineLength = Define.Instance.Common.GridLineLength,
 
             };
             inputDeps = job.Schedule(inputDeps);
-            m_group.AddDependency(inputDeps);
+            m_query.AddDependency(inputDeps);
             return job;
         }
 

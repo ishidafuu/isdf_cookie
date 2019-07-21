@@ -11,70 +11,84 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(PieceMoveGroup))]
-    [UpdateAfter(typeof(CountGroup))]
+    // [UpdateAfter(typeof(CountGroup))]
     public class PieceInputMoveSystem : JobComponentSystem
     {
-        ComponentGroup m_groupField;
-        ComponentGroup m_groupPiece;
-        ComponentGroup m_groupGrid;
+        EntityQuery m_queryField;
+        EntityQuery m_queryPiece;
+        EntityQuery m_queryGrid;
 
         protected override void OnCreateManager()
         {
-            m_groupField = GetComponentGroup(
+            m_queryField = GetEntityQuery(
                 ComponentType.ReadOnly<FieldInput>(),
                 ComponentType.ReadOnly<FieldBanish>()
             );
-            m_groupGrid = GetComponentGroup(
-                ComponentType.Create<GridState>()
+            m_queryGrid = GetEntityQuery(
+                ComponentType.ReadWrite<GridState>()
             );
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PiecePosition>()
+            m_queryPiece = GetEntityQuery(
+                ComponentType.ReadWrite<PiecePosition>()
             );
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_groupField.AddDependency(inputDeps);
-            m_groupGrid.AddDependency(inputDeps);
-            m_groupPiece.AddDependency(inputDeps);
+            m_queryField.AddDependency(inputDeps);
+            m_queryGrid.AddDependency(inputDeps);
+            m_queryPiece.AddDependency(inputDeps);
+
+            NativeArray<FieldInput> fieldInputs = m_queryField.ToComponentDataArray<FieldInput>(Allocator.TempJob);
+            NativeArray<FieldBanish> fieldBanishs = m_queryField.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
+            NativeArray<GridState> gridStates = m_queryGrid.ToComponentDataArray<GridState>(Allocator.TempJob);
+            NativeArray<PiecePosition> piecePositions = m_queryPiece.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
+
             var moveJob = new PieceMoveJob()
             {
-                fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
-                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
-                gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
-                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
-                GridSize = Define.Instance.Common.GridSize,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridColumnLength = Define.Instance.Common.GridColumnLength,
-                FieldWidth = Define.Instance.Common.FieldWidth,
-                FieldHeight = Define.Instance.Common.FieldHeight,
+                fieldInputs = fieldInputs,
+                fieldBanishs = fieldBanishs,
+                gridStates = gridStates,
+                piecePositions = piecePositions,
+                GridSize = Settings.Instance.Common.GridSize,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridColumnLength = Settings.Instance.Common.GridColumnLength,
+                FieldWidth = Settings.Instance.Common.FieldWidth,
+                FieldHeight = Settings.Instance.Common.FieldHeight,
                 // PieceLimitSpeed = Define.Instance.Common.PieceLimitSpeed,
-                BorderSpeed = Define.Instance.Common.BorderSpeed,
+                BorderSpeed = Settings.Instance.Common.BorderSpeed,
             };
 
             inputDeps = moveJob.Schedule(inputDeps);
 
             var reflectJob = new GridReflectJob()
             {
-                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
-                gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
-                GridSize = Define.Instance.Common.GridSize,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridColumnLength = Define.Instance.Common.GridColumnLength,
+                piecePositions = piecePositions,
+                gridStates = gridStates,
+                GridSize = Settings.Instance.Common.GridSize,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridColumnLength = Settings.Instance.Common.GridColumnLength,
             };
 
             inputDeps = reflectJob.Schedule(inputDeps);
             inputDeps.Complete();
+
+            m_queryPiece.CopyFromComponentDataArray(moveJob.piecePositions);
+            m_queryGrid.CopyFromComponentDataArray(reflectJob.gridStates);
+
+            fieldInputs.Dispose();
+            fieldBanishs.Dispose();
+            gridStates.Dispose();
+            piecePositions.Dispose();
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct PieceMoveJob : IJob
         {
-            public ComponentDataArray<PiecePosition> piecePositions;
-            [ReadOnly] public ComponentDataArray<FieldInput> fieldInputs;
-            [ReadOnly] public ComponentDataArray<FieldBanish> fieldBanishs;
-            [ReadOnly] public ComponentDataArray<GridState> gridStates;
+            public NativeArray<PiecePosition> piecePositions;
+            [ReadOnly] public NativeArray<FieldInput> fieldInputs;
+            [ReadOnly] public NativeArray<FieldBanish> fieldBanishs;
+            [ReadOnly] public NativeArray<GridState> gridStates;
             [ReadOnly] public int GridSize;
             [ReadOnly] public int GridRowLength;
             [ReadOnly] public int GridColumnLength;
@@ -233,8 +247,8 @@ namespace NKPB
         // [BurstCompileAttribute]
         struct GridReflectJob : IJob
         {
-            public ComponentDataArray<GridState> gridStates;
-            [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
+            public NativeArray<GridState> gridStates;
+            [ReadOnly] public NativeArray<PiecePosition> piecePositions;
             [ReadOnly] public int GridSize;
             [ReadOnly] public int GridRowLength;
             [ReadOnly] public int GridColumnLength;

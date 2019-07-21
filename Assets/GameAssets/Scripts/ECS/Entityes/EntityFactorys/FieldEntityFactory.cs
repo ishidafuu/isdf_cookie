@@ -22,9 +22,9 @@ namespace NKPB
             var entity = _entityManager.CreateEntity(archetype);
 
             // 必要なキャラのみインプットをつける
-            if (_i < Define.Instance.Common.PlayerCount)
+            if (_i < Settings.Instance.Common.PlayerCount)
             {
-                _entityManager.AddComponent(entity, ComponentType.Create<FieldScan>());
+                _entityManager.AddComponent(entity, ComponentType.ReadWrite<FieldScan>());
             }
 
             _entityManager.SetComponentData(entity, new FieldBanish

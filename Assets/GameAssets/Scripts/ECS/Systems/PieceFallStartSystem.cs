@@ -11,57 +11,71 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(JudgeGroup))]
-    [UpdateAfter(typeof(PieceMoveGroup))]
+    // [UpdateAfter(typeof(PieceMoveGroup))]
     public class PieceFallStartSystem : JobComponentSystem
     {
-        ComponentGroup m_groupPiece;
-        ComponentGroup m_groupGrid;
-        ComponentGroup m_groupField;
+        EntityQuery m_queryPiece;
+        EntityQuery m_queryGrid;
+        EntityQuery m_queryField;
         protected override void OnCreateManager()
         {
-            m_groupField = GetComponentGroup(
-                ComponentType.Create<FieldBanish>()
+            m_queryField = GetEntityQuery(
+                ComponentType.ReadWrite<FieldBanish>()
             );
-            m_groupGrid = GetComponentGroup(
-                ComponentType.Create<GridState>()
+            m_queryGrid = GetEntityQuery(
+                ComponentType.ReadWrite<GridState>()
             );
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PieceState>(),
-                ComponentType.Create<PiecePosition>()
+            m_queryPiece = GetEntityQuery(
+                ComponentType.ReadWrite<PieceState>(),
+                ComponentType.ReadWrite<PiecePosition>()
             );
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            NativeArray<int> fallLength = new NativeArray<int>(Define.Instance.Common.GridRowLength, Allocator.TempJob);
+            NativeArray<int> fallLength = new NativeArray<int>(Settings.Instance.Common.GridRowLength, Allocator.TempJob);
+            NativeArray<FieldBanish> fieldBanishs = m_queryField.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
+            NativeArray<GridState> gridStates = m_queryGrid.ToComponentDataArray<GridState>(Allocator.TempJob);
+            NativeArray<PieceState> pieceStates = m_queryPiece.ToComponentDataArray<PieceState>(Allocator.TempJob);
+            NativeArray<PiecePosition> piecePositions = m_queryPiece.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
+
             var job = new CountJob()
             {
-                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
-                gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
-                pieceStates = m_groupPiece.GetComponentDataArray<PieceState>(),
-                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
+                fieldBanishs = fieldBanishs,
+                gridStates = gridStates,
+                pieceStates = pieceStates,
+                piecePositions = piecePositions,
                 fallCount = fallLength,
-                BanishEndCount = Define.Instance.Common.BanishEndCount,
-                BanishImageCount = Define.Instance.Common.BanishImageCount,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridSize = Define.Instance.Common.GridSize,
-                FieldHeight = Define.Instance.Common.FieldHeight,
+                BanishEndCount = Settings.Instance.Common.BanishEndCount,
+                BanishImageCount = Settings.Instance.Common.BanishImageCount,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridSize = Settings.Instance.Common.GridSize,
+                FieldHeight = Settings.Instance.Common.FieldHeight,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
 
+            m_queryField.CopyFromComponentDataArray(job.fieldBanishs);
+            m_queryPiece.CopyFromComponentDataArray(job.pieceStates);
+            m_queryPiece.CopyFromComponentDataArray(job.piecePositions);
+            m_queryGrid.CopyFromComponentDataArray(job.gridStates);
+
             fallLength.Dispose();
+            fieldBanishs.Dispose();
+            gridStates.Dispose();
+            pieceStates.Dispose();
+            piecePositions.Dispose();
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct CountJob : IJob
         {
-            public ComponentDataArray<PieceState> pieceStates;
-            public ComponentDataArray<PiecePosition> piecePositions;
+            public NativeArray<PieceState> pieceStates;
+            public NativeArray<PiecePosition> piecePositions;
 
-            public ComponentDataArray<GridState> gridStates;
-            public ComponentDataArray<FieldBanish> fieldBanishs;
+            public NativeArray<GridState> gridStates;
+            public NativeArray<FieldBanish> fieldBanishs;
             public NativeArray<int> fallCount;
             [ReadOnly] public int BanishEndCount;
             [ReadOnly] public int BanishImageCount;

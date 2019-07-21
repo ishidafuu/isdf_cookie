@@ -11,35 +11,39 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(CountGroup))]
-    [UpdateAfter(typeof(FieldMoveGroup))]
+    // [UpdateAfter(typeof(FieldMoveGroup))]
     public class PieceCountSystem : JobComponentSystem
     {
-        ComponentGroup m_groupPiece;
+        EntityQuery m_queryPiece;
 
         protected override void OnCreateManager()
         {
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PieceState>()
+            m_queryPiece = GetEntityQuery(
+                ComponentType.ReadWrite<PieceState>()
             );
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            NativeArray<PieceState> pieceStates = m_queryPiece.ToComponentDataArray<PieceState>(Allocator.TempJob);
             var job = new CountJob()
             {
-                pieceStates = m_groupPiece.GetComponentDataArray<PieceState>(),
-                BanishEndCount = Define.Instance.Common.BanishEndCount,
-                BanishImageCount = Define.Instance.Common.BanishImageCount,
+                pieceStates = pieceStates,
+                BanishEndCount = Settings.Instance.Common.BanishEndCount,
+                BanishImageCount = Settings.Instance.Common.BanishImageCount,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+
+            m_queryPiece.CopyFromComponentDataArray(job.pieceStates);
+            pieceStates.Dispose();
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct CountJob : IJob
         {
-            public ComponentDataArray<PieceState> pieceStates;
+            public NativeArray<PieceState> pieceStates;
             [ReadOnly] public int BanishEndCount;
             [ReadOnly] public int BanishImageCount;
 

@@ -7,60 +7,74 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(JudgeGroup))]
-    [UpdateAfter(typeof(PieceMoveGroup))]
+    // [UpdateAfter(typeof(PieceMoveGroup))]
     public class FieldCheckBanishSystem : JobComponentSystem
     {
-        ComponentGroup m_groupField;
-        ComponentGroup m_groupPiece;
-        ComponentGroup m_groupGrid;
-        ComponentGroup m_groupEffect;
+        EntityQuery m_queryField;
+        EntityQuery m_queryPiece;
+        EntityQuery m_queryGrid;
+        EntityQuery m_queryEffect;
 
         protected override void OnCreateManager()
         {
-            m_groupField = GetComponentGroup(
+            m_queryField = GetEntityQuery(
                 ComponentType.ReadOnly<FieldInput>(),
-                ComponentType.Create<FieldBanish>()
+                ComponentType.ReadWrite<FieldBanish>()
             );
-            m_groupPiece = GetComponentGroup(
-                ComponentType.Create<PieceState>(),
+            m_queryPiece = GetEntityQuery(
+                ComponentType.ReadWrite<PieceState>(),
                 ComponentType.ReadOnly<PiecePosition>()
             );
-            m_groupGrid = GetComponentGroup(
+            m_queryGrid = GetEntityQuery(
                 ComponentType.ReadOnly<GridState>()
             );
-            m_groupEffect = GetComponentGroup(
-                ComponentType.Create<EffectState>()
+            m_queryEffect = GetEntityQuery(
+                ComponentType.ReadWrite<EffectState>()
             );
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_groupField.AddDependency(inputDeps);
-            m_groupPiece.AddDependency(inputDeps);
-            m_groupGrid.AddDependency(inputDeps);
-            m_groupEffect.AddDependency(inputDeps);
+            m_queryField.AddDependency(inputDeps);
+            m_queryPiece.AddDependency(inputDeps);
+            m_queryGrid.AddDependency(inputDeps);
+            m_queryEffect.AddDependency(inputDeps);
 
-            int checkLength = Mathf.Max(Define.Instance.Common.GridRowLength, Define.Instance.Common.GridColumnLength);
+            int checkLength = Mathf.Max(Settings.Instance.Common.GridRowLength, Settings.Instance.Common.GridColumnLength);
             NativeArray<PieceState> checkStates = new NativeArray<PieceState>(checkLength, Allocator.TempJob);
+            NativeArray<FieldBanish> fieldBanishs = m_queryField.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
+            NativeArray<PieceState> pieceStates = m_queryPiece.ToComponentDataArray<PieceState>(Allocator.TempJob);
+            NativeArray<EffectState> effectStates = m_queryEffect.ToComponentDataArray<EffectState>(Allocator.TempJob);
+            NativeArray<PiecePosition> piecePositions = m_queryPiece.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
+            NativeArray<FieldInput> fieldInputs = m_queryField.ToComponentDataArray<FieldInput>(Allocator.TempJob);
+            NativeArray<GridState> gridStates = m_queryGrid.ToComponentDataArray<GridState>(Allocator.TempJob);
 
             var job = new CheckLineJob()
             {
-                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
-                fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
-
-                pieceStates = m_groupPiece.GetComponentDataArray<PieceState>(),
-                piecePositions = m_groupPiece.GetComponentDataArray<PiecePosition>(),
-
-                gridStates = m_groupGrid.GetComponentDataArray<GridState>(),
-
-                effectStates = m_groupEffect.GetComponentDataArray<EffectState>(),
+                fieldBanishs = fieldBanishs,
+                fieldInputs = fieldInputs,
+                pieceStates = pieceStates,
+                piecePositions = piecePositions,
+                gridStates = gridStates,
+                effectStates = effectStates,
                 checkStates = checkStates,
-                GridSize = Define.Instance.Common.GridSize,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridColumnLength = Define.Instance.Common.GridColumnLength,
+                GridSize = Settings.Instance.Common.GridSize,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridColumnLength = Settings.Instance.Common.GridColumnLength,
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+
+            m_queryField.CopyFromComponentDataArray(job.fieldBanishs);
+            m_queryPiece.CopyFromComponentDataArray(job.pieceStates);
+            m_queryEffect.CopyFromComponentDataArray(job.effectStates);
+
+            fieldBanishs.Dispose();
+            fieldInputs.Dispose();
+            pieceStates.Dispose();
+            piecePositions.Dispose();
+            gridStates.Dispose();
+            effectStates.Dispose();
             checkStates.Dispose();
             return inputDeps;
         }
@@ -68,14 +82,14 @@ namespace NKPB
         // [BurstCompileAttribute]
         struct CheckLineJob : IJob
         {
-            public ComponentDataArray<FieldBanish> fieldBanishs;
-            public ComponentDataArray<PieceState> pieceStates;
-            public ComponentDataArray<EffectState> effectStates;
+            public NativeArray<FieldBanish> fieldBanishs;
+            public NativeArray<PieceState> pieceStates;
+            public NativeArray<EffectState> effectStates;
             public NativeArray<PieceState> checkStates;
 
-            [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
-            [ReadOnly] public ComponentDataArray<FieldInput> fieldInputs;
-            [ReadOnly] public ComponentDataArray<GridState> gridStates;
+            [ReadOnly] public NativeArray<PiecePosition> piecePositions;
+            [ReadOnly] public NativeArray<FieldInput> fieldInputs;
+            [ReadOnly] public NativeArray<GridState> gridStates;
             [ReadOnly] public int GridSize;
             [ReadOnly] public int GridRowLength;
             [ReadOnly] public int GridColumnLength;

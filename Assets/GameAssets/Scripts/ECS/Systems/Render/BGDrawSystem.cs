@@ -9,39 +9,31 @@ using UnityEngine.Experimental.PlayerLoop;
 namespace NKPB
 {
     [UpdateInGroup(typeof(RenderGroup))]
-    [UpdateAfter(typeof(CountGroup))]
-    [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
+    // [UpdateAfter(typeof(CountGroup))]
+    // [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
     public class BGDrawSystem : JobComponentSystem
     {
-        // ComponentGroup m_group;
+        // EntityQuery m_query;
         Quaternion m_quaternion;
         Vector3 m_fieldPosition;
         Vector3 m_gridPosition;
         protected override void OnCreateManager()
         {
-            // m_group = GetComponentGroup(
-            //     ComponentType.ReadOnly<FieldId>()
-            // );
             m_quaternion = Quaternion.Euler(new Vector3(-90, 0, 0));
 
-            m_fieldPosition = new Vector3(Define.Instance.Common.FieldOffsetX,
-                Define.Instance.Common.FieldOffsetY,
+            m_fieldPosition = new Vector3(Settings.Instance.Common.FieldOffsetX,
+                Settings.Instance.Common.FieldOffsetY,
                 (int)EnumDrawLayer.FieldLayer);
 
-            m_gridPosition = new Vector3(Define.Instance.Common.FieldOffsetX + Define.Instance.Common.GridOffsetX,
-                Define.Instance.Common.FieldOffsetY + Define.Instance.Common.GridOffsetY,
+            m_gridPosition = new Vector3(Settings.Instance.Common.FieldOffsetX + Settings.Instance.Common.GridOffsetX,
+                Settings.Instance.Common.FieldOffsetY + Settings.Instance.Common.GridOffsetY,
                 (int)EnumDrawLayer.GridLayer);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            // m_group.AddDependency(inputDeps);
-
             // 描画のためCompleteする
             inputDeps.Complete();
-
-            // DrawBgScroll(toukiMeters);
-            // DrawFrame();
             DrawGrid();
             return inputDeps;
         }

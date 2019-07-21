@@ -4,7 +4,7 @@
 	using UnityEngine;
 
 	[Serializable]
-	public struct MeshMatList : ISharedComponentData
+	public struct MeshMatList : IEquatable<MeshMatList>, ISharedComponentData
 	{
 	    public Material material;
 	    public Dictionary<string, Mesh> meshes;
@@ -12,6 +12,7 @@
 
 	    public MeshMatList(string path, string shader)
 	    {
+	        // Debug.Log("MeshMatList");
 	        meshes = new Dictionary<string, Mesh>();
 	        sprites = new Dictionary<string, Sprite>();
 	        UnityEngine.Object[] spriteList = Resources.LoadAll(path, typeof(Sprite));
@@ -72,5 +73,15 @@
 	                uv = sprite.uv,
 	                triangles = triangles
 	        };
+	    }
+
+	    public bool Equals(MeshMatList obj)
+	    {
+	        // var volume = (MeshMatList)obj;
+	        return false;
+	    }
+	    public override int GetHashCode()
+	    {
+	        return EqualityComparer<Transform>.Default.GetHashCode();
 	    }
 	}

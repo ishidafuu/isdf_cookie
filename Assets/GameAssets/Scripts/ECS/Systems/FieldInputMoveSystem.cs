@@ -11,55 +11,63 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(FieldMoveGroup))]
-    [UpdateAfter(typeof(ScanGroup))]
     public class FieldInputMoveSystem : JobComponentSystem
     {
-        ComponentGroup m_groupField;
+        EntityQuery m_queryField;
         static int m_offsetConvertPositionX;
         static int m_offsetConvertPositionY;
 
         protected override void OnCreateManager()
         {
-            m_groupField = GetComponentGroup(
+            m_queryField = GetEntityQuery(
                 ComponentType.ReadOnly<FieldScan>(),
                 ComponentType.ReadOnly<FieldBanish>(),
-                ComponentType.Create<FieldInput>()
+                ComponentType.ReadWrite<FieldInput>()
             );
 
-            m_offsetConvertPositionX = -Define.Instance.Common.FieldOffsetX - Define.Instance.Common.PieceOffsetX;
-            m_offsetConvertPositionY = -Define.Instance.Common.FieldOffsetY - Define.Instance.Common.PieceOffsetY;
+            m_offsetConvertPositionX = -Settings.Instance.Common.FieldOffsetX - Settings.Instance.Common.PieceOffsetX;
+            m_offsetConvertPositionY = -Settings.Instance.Common.FieldOffsetY - Settings.Instance.Common.PieceOffsetY;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_groupField.AddDependency(inputDeps);
+            m_queryField.AddDependency(inputDeps);
+
+            NativeArray<FieldInput> fieldInputs = m_queryField.ToComponentDataArray<FieldInput>(Allocator.TempJob);
+            NativeArray<FieldScan> fieldScans = m_queryField.ToComponentDataArray<FieldScan>(Allocator.TempJob);
+            NativeArray<FieldBanish> fieldBanishs = m_queryField.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
             var job = new MoveJob()
             {
-                fieldInputs = m_groupField.GetComponentDataArray<FieldInput>(),
-                fieldScans = m_groupField.GetComponentDataArray<FieldScan>(),
-                fieldBanishs = m_groupField.GetComponentDataArray<FieldBanish>(),
-                SwipeThreshold = Define.Instance.Common.SwipeThreshold,
-                GridSize = Define.Instance.Common.GridSize,
-                BorderSpeed = Define.Instance.Common.BorderSpeed,
-                BorderOnGridDist = Define.Instance.Common.BorderOnGridDist,
-                PixelSize = Define.Instance.PixelSize,
-                FieldWidth = Define.Instance.Common.FieldWidth,
-                FieldHeight = Define.Instance.Common.FieldHeight,
+                fieldInputs = fieldInputs,
+                fieldScans = fieldScans,
+                fieldBanishs = fieldBanishs,
+                SwipeThreshold = Settings.Instance.Common.SwipeThreshold,
+                GridSize = Settings.Instance.Common.GridSize,
+                BorderSpeed = Settings.Instance.Common.BorderSpeed,
+                BorderOnGridDist = Settings.Instance.Common.BorderOnGridDist,
+                PixelSize = Settings.Instance.PixelSize,
+                FieldWidth = Settings.Instance.Common.FieldWidth,
+                FieldHeight = Settings.Instance.Common.FieldHeight,
                 offsetConvertPositionX = m_offsetConvertPositionX,
                 offsetConvertPositionY = m_offsetConvertPositionY,
             };
-
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+            m_queryField.CopyFromComponentDataArray(job.fieldInputs);
+
+            fieldInputs.Dispose();
+            fieldScans.Dispose();
+            fieldBanishs.Dispose();
+
             return inputDeps;
         }
 
         // [BurstCompileAttribute]
         struct MoveJob : IJob
         {
-            public ComponentDataArray<FieldInput> fieldInputs;
-            [ReadOnly] public ComponentDataArray<FieldScan> fieldScans;
-            [ReadOnly] public ComponentDataArray<FieldBanish> fieldBanishs;
+            public NativeArray<FieldInput> fieldInputs;
+            [ReadOnly] public NativeArray<FieldScan> fieldScans;
+            [ReadOnly] public NativeArray<FieldBanish> fieldBanishs;
             [ReadOnly] public float SwipeThreshold;
             [ReadOnly] public int GridSize;
             [ReadOnly] public int BorderSpeed;

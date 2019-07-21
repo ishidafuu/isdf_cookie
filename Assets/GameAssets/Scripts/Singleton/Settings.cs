@@ -10,7 +10,7 @@ using UnityEngine.Tilemaps;
 namespace NKPB
 {
     [ExecuteInEditMode]
-    public class Define : SingletonMonoBehaviour<Define>
+    public class Settings : SingletonMonoBehaviour<Settings>
         {
             public CommonSettings Common;
             public MoveSettings Move;
@@ -35,7 +35,7 @@ namespace NKPB
         }
 
 #if UNITY_EDITOR
-    [CustomEditor(typeof(Define))] // 拡張するクラスを指定
+    [CustomEditor(typeof(Settings))] // 拡張するクラスを指定
     public class DefineEditor : Editor
     {
         public override void OnInspectorGUI()
@@ -46,7 +46,7 @@ namespace NKPB
             // ボタンを表示
             if (GUILayout.Button("LoadObject"))
             {
-                (target as Define).LoadObject();
+                (target as Settings).LoadObject();
             }
         }
 

@@ -1,6 +1,5 @@
-using UnityEngine;
-
 using Unity.Entities;
+using UnityEngine;
 
 static class Preload
 {
@@ -10,6 +9,6 @@ static class Preload
     static void DomainUnloadShutdown()
     {
         World.DisposeAllWorlds();
-        ScriptBehaviourUpdateOrder.UpdatePlayerLoop();
+        ScriptBehaviourUpdateOrder.UpdatePlayerLoop(World.Active);
     }
 }

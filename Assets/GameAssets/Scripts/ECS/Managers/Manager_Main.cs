@@ -22,9 +22,9 @@ namespace NKPB
 
         void Start()
         {
-            FireBaseManager.Init();
+            // FireBaseManager.Init();
 
-            Define.Instance.SetPixelSize(Screen.width / m_pixelPerfectCamera.refResolutionX);
+            Settings.Instance.SetPixelSize(Screen.width / m_pixelPerfectCamera.refResolutionX);
 
             var scene = SceneManager.GetActiveScene();
             if (scene.name != SCENE_NAME)
@@ -39,56 +39,54 @@ namespace NKPB
 
         void OnDestroy()
         {
-            // if (FirebaseApp.DefaultInstance != null)
-            // {
-            //     FirebaseApp.DefaultInstance.Dispose();
-            // }
+            World.DisposeAllWorlds();
+            WordStorage.Instance.Dispose();
+            WordStorage.Instance = null;
+            ScriptBehaviourUpdateOrder.UpdatePlayerLoop(null);
         }
-
-        // private List<UserScore> ParseValidUserScoreRecords(
-        //     DataSnapshot snapshot,
-        //     long startTS,
-        //     long endTS)
-        // {
-        //     return snapshot.Children
-        //         .Select(scoreRecord => UserScore.CreateScoreFromRecord(scoreRecord))
-        //         .Where(score => score != null && score.Timestamp > startTS && score.Timestamp <= endTS)
-        //         .Reverse()
-        //         .ToList();
-        // }
 
         EntityManager InitializeWorld()
         {
             World[] worlds = new World[1];
             ref World world = ref worlds[0];
             world = new World(SCENE_NAME);
+            // World.Active
+            World.Active = world;
 
-            EntityManager manager = world.CreateManager<EntityManager>();
+            InitializationSystemGroup initializationSystemGroup = world.GetOrCreateSystem<InitializationSystemGroup>();
+            SimulationSystemGroup simulationSystemGroup = world.GetOrCreateSystem<SimulationSystemGroup>();
+            PresentationSystemGroup presentationSystemGroup = world.GetOrCreateSystem<PresentationSystemGroup>();
+
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<ScanSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<FieldInputMoveSystem>());
+
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<PieceInputMoveSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<PieceFallMoveSystem>());
+
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<FieldCountSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<PieceCountSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<EffectCountSystem>());
+
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<FieldCheckBanishSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<PieceFallStartSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<BGDrawSystem>());
+
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<PieceDrawSystem>());
+            simulationSystemGroup.AddSystemToUpdateList(world.GetOrCreateSystem<EffectDrawSystem>());
+
+            initializationSystemGroup.SortSystemUpdateList();
+            simulationSystemGroup.SortSystemUpdateList();
+            presentationSystemGroup.SortSystemUpdateList();
 
             InitializeSystem(world);
-            ScriptBehaviourUpdateOrder.UpdatePlayerLoop(worlds);
+            ScriptBehaviourUpdateOrder.UpdatePlayerLoop(world);
 
-            return manager;
+            return world.EntityManager;
         }
 
         void InitializeSystem(World world)
         {
-            world.CreateManager(typeof(ScanSystem));
-            world.CreateManager(typeof(FieldInputMoveSystem));
 
-            world.CreateManager(typeof(PieceInputMoveSystem));
-            world.CreateManager(typeof(PieceFallMoveSystem));
-
-            world.CreateManager(typeof(FieldCountSystem));
-            world.CreateManager(typeof(PieceCountSystem));
-            world.CreateManager(typeof(EffectCountSystem));
-
-            world.CreateManager(typeof(FieldCheckBanishSystem));
-            world.CreateManager(typeof(PieceFallStartSystem));
-            world.CreateManager(typeof(BGDrawSystem));
-
-            world.CreateManager(typeof(PieceDrawSystem));
-            world.CreateManager(typeof(EffectDrawSystem));
         }
 
         void ComponentCache()
@@ -111,7 +109,7 @@ namespace NKPB
 
         void CreateFieldEntity(EntityManager manager)
         {
-            for (int fieldId = 0; fieldId < Define.Instance.Common.FieldCount; fieldId++)
+            for (int fieldId = 0; fieldId < Settings.Instance.Common.FieldCount; fieldId++)
             {
                 var fieldEntity = FieldEntityFactory.CreateEntity(fieldId, manager, ref Shared.puzzleMeshMat);
             }
@@ -119,9 +117,9 @@ namespace NKPB
 
         void CreateGridEntity(EntityManager manager)
         {
-            for (int fieldId = 0; fieldId < Define.Instance.Common.FieldCount; fieldId++)
+            for (int fieldId = 0; fieldId < Settings.Instance.Common.FieldCount; fieldId++)
             {
-                for (int gridId = 0; gridId < Define.Instance.Common.PieceCount; gridId++)
+                for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
                     var gridEntity = GridEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
                 }
@@ -130,9 +128,9 @@ namespace NKPB
 
         void CreatePieceEntity(EntityManager manager)
         {
-            for (int fieldId = 0; fieldId < Define.Instance.Common.FieldCount; fieldId++)
+            for (int fieldId = 0; fieldId < Settings.Instance.Common.FieldCount; fieldId++)
             {
-                for (int gridId = 0; gridId < Define.Instance.Common.PieceCount; gridId++)
+                for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
                     var pieceEntity = PieceEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
                 }
@@ -141,9 +139,9 @@ namespace NKPB
 
         void CreateEffectEntity(EntityManager manager)
         {
-            for (int fieldId = 0; fieldId < Define.Instance.Common.FieldCount; fieldId++)
+            for (int fieldId = 0; fieldId < Settings.Instance.Common.FieldCount; fieldId++)
             {
-                for (int gridId = 0; gridId < Define.Instance.Common.PieceCount; gridId++)
+                for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
                     var effectEntity = EffectEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
                 }

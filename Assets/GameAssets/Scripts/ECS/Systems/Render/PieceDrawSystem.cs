@@ -9,16 +9,16 @@ using UnityEngine.Experimental.PlayerLoop;
 namespace NKPB
 {
     [UpdateInGroup(typeof(RenderGroup))]
-    [UpdateAfter(typeof(CountGroup))]
-    [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
+    // [UpdateAfter(typeof(CountGroup))]
+    // [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
     public class PieceDrawSystem : JobComponentSystem
     {
-        ComponentGroup m_group;
+        EntityQuery m_query;
         Quaternion m_quaternion;
 
         protected override void OnCreateManager()
         {
-            m_group = GetComponentGroup(
+            m_query = GetEntityQuery(
                 ComponentType.ReadOnly<PiecePosition>(),
                 ComponentType.ReadOnly<PieceState>()
             );
@@ -27,23 +27,28 @@ namespace NKPB
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_group.AddDependency(inputDeps);
-            ComponentDataArray<PieceState> pieceStates = m_group.GetComponentDataArray<PieceState>();
-            NativeArray<Matrix4x4> pieceMatrixes = new NativeArray<Matrix4x4>(Define.Instance.Common.PieceCount + 1, Allocator.TempJob);
+            // Debug.Log("PieceDrawSystem");
+
+            m_query.AddDependency(inputDeps);
+            NativeArray<PieceState> pieceStates = m_query.ToComponentDataArray<PieceState>(Allocator.TempJob);
+            NativeArray<PiecePosition> piecePositions = m_query.ToComponentDataArray<PiecePosition>(Allocator.TempJob);
+            NativeArray<Matrix4x4> pieceMatrixes = new NativeArray<Matrix4x4>(Settings.Instance.Common.PieceCount + 1, Allocator.TempJob);
 
             NativeArray<int> clipNo = new NativeArray<int>(1, Allocator.TempJob);
-            DrawJob job = DoDrawJob(ref inputDeps, pieceMatrixes, clipNo);
+            DrawJob job = DoDrawJob(ref inputDeps, pieceStates, piecePositions, pieceMatrixes, clipNo);
             inputDeps.Complete();
 
             Draw(pieceStates, pieceMatrixes, job);
 
+            pieceStates.Dispose();
+            piecePositions.Dispose();
             pieceMatrixes.Dispose();
             clipNo.Dispose();
 
             return inputDeps;
         }
 
-        private void Draw(ComponentDataArray<PieceState> pieceStates, NativeArray<Matrix4x4> pieceMatrixes, DrawJob job)
+        private void Draw(NativeArray<PieceState> pieceStates, NativeArray<Matrix4x4> pieceMatrixes, DrawJob job)
         {
             for (int i = 0; i < pieceMatrixes.Length - 1; i++)
             {
@@ -69,6 +74,8 @@ namespace NKPB
         }
 
         private DrawJob DoDrawJob(ref JobHandle inputDeps,
+            NativeArray<PieceState> pieceStates,
+            NativeArray<PiecePosition> piecePositions,
             NativeArray<Matrix4x4> pieceMatrixes,
             NativeArray<int> clipNo)
         {
@@ -76,21 +83,21 @@ namespace NKPB
             {
                 pieceMatrixes = pieceMatrixes,
                 clipNo = clipNo,
-                piecePositions = m_group.GetComponentDataArray<PiecePosition>(),
-                pieceStates = m_group.GetComponentDataArray<PieceState>(),
+                piecePositions = piecePositions,
+                pieceStates = pieceStates,
                 one = Vector3.one,
                 q = m_quaternion,
-                FieldOffsetX = Define.Instance.Common.FieldOffsetX,
-                FieldOffsetY = Define.Instance.Common.FieldOffsetY,
-                PieceOffsetX = Define.Instance.Common.PieceOffsetX,
-                PieceOffsetY = Define.Instance.Common.PieceOffsetY,
-                GridSize = Define.Instance.Common.GridSize,
-                GridRowLength = Define.Instance.Common.GridRowLength,
-                GridColumnLength = Define.Instance.Common.GridColumnLength,
+                FieldOffsetX = Settings.Instance.Common.FieldOffsetX,
+                FieldOffsetY = Settings.Instance.Common.FieldOffsetY,
+                PieceOffsetX = Settings.Instance.Common.PieceOffsetX,
+                PieceOffsetY = Settings.Instance.Common.PieceOffsetY,
+                GridSize = Settings.Instance.Common.GridSize,
+                GridRowLength = Settings.Instance.Common.GridRowLength,
+                GridColumnLength = Settings.Instance.Common.GridColumnLength,
 
             };
             inputDeps = job.Schedule(inputDeps);
-            m_group.AddDependency(inputDeps);
+            m_query.AddDependency(inputDeps);
             return job;
         }
 
@@ -99,8 +106,8 @@ namespace NKPB
         {
             public NativeArray<Matrix4x4> pieceMatrixes;
             public NativeArray<int> clipNo;
-            [ReadOnly] public ComponentDataArray<PiecePosition> piecePositions;
-            [ReadOnly] public ComponentDataArray<PieceState> pieceStates;
+            [ReadOnly] public NativeArray<PiecePosition> piecePositions;
+            [ReadOnly] public NativeArray<PieceState> pieceStates;
             [ReadOnly] public Vector3 one;
             [ReadOnly] public Quaternion q;
             [ReadOnly] public int FieldOffsetX;

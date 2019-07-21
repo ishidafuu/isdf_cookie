@@ -1,9 +1,21 @@
-﻿namespace NKPB
+﻿using Unity.Entities;
+namespace NKPB
 {
-    public class ScanGroup {}
-    public class FieldMoveGroup {}
-    public class CountGroup {}
-    public class PieceMoveGroup {}
-    public class JudgeGroup {}
-    public class RenderGroup {}
+    [UpdateBefore(typeof(FieldMoveGroup))]
+    public class ScanGroup : ComponentSystemGroup {}
+
+    [UpdateAfter(typeof(ScanGroup))]
+    public class FieldMoveGroup : ComponentSystemGroup {}
+
+    [UpdateAfter(typeof(FieldMoveGroup))]
+    public class CountGroup : ComponentSystemGroup {}
+
+    [UpdateAfter(typeof(CountGroup))]
+    public class PieceMoveGroup : ComponentSystemGroup {}
+
+    [UpdateAfter(typeof(PieceMoveGroup))]
+    public class JudgeGroup : ComponentSystemGroup {}
+
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public class RenderGroup : ComponentSystemGroup {}
 }

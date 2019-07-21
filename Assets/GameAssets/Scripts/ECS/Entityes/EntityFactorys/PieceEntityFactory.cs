@@ -27,10 +27,10 @@ namespace NKPB
                     pieceId = _pieceId,
             });
 
-            int gridPosX = _pieceId % Define.Instance.Common.GridRowLength;
-            int gridPosY = _pieceId / Define.Instance.Common.GridRowLength;
-            int posX = gridPosX * Define.Instance.Common.GridSize;
-            int posY = gridPosY * Define.Instance.Common.GridSize;
+            int gridPosX = _pieceId % Settings.Instance.Common.GridRowLength;
+            int gridPosY = _pieceId / Settings.Instance.Common.GridRowLength;
+            int posX = gridPosX * Settings.Instance.Common.GridSize;
+            int posY = gridPosY * Settings.Instance.Common.GridSize;
 
             // 位置
             _entityManager.SetComponentData(entity, new PiecePosition
@@ -42,7 +42,7 @@ namespace NKPB
             _entityManager.SetComponentData(entity, new PieceState
             {
                 type = EnumPieceType.Normal,
-                    color = (int)UnityEngine.Random.Range(0, Define.Instance.Common.PieceColorCount),
+                    color = (int)UnityEngine.Random.Range(0, Settings.Instance.Common.PieceColorCount),
             });
 
             // SharedComponentDataのセット

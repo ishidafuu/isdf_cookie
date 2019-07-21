@@ -12,31 +12,33 @@ using UnityEngine;
 namespace NKPB
 {
     [UpdateInGroup(typeof(ScanGroup))]
-    [UpdateBefore(typeof(FieldMoveGroup))]
+    // [UpdateBefore(typeof(FieldMoveGroup))]
+    // [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class ScanSystem : ComponentSystem
     {
-        ComponentGroup m_group;
+        EntityQuery m_query;
         Vector2 m_offset;
 
         protected override void OnCreateManager()
         {
-            m_group = GetComponentGroup(
-                ComponentType.Create<FieldScan>()
+            m_query = GetEntityQuery(
+                ComponentType.ReadWrite<FieldScan>(),
+                ComponentType.ReadWrite<FieldBanish>()
             );
-
             m_offset = new Vector2(-(Screen.width / 2), -(Screen.height / 2));
         }
         protected override void OnUpdate()
         {
-            var fieldScans = m_group.ToComponentDataArray<FieldScan>(Allocator.TempJob);
-            var fieldBanishs = m_group.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
+            var fieldScans = m_query.ToComponentDataArray<FieldScan>(Allocator.TempJob);
+            var fieldBanishs = m_query.ToComponentDataArray<FieldBanish>(Allocator.TempJob);
             for (int i = 0; i < fieldScans.Length; i++)
             {
                 var fieldScan = fieldScans[i];
                 Scan(ref fieldScan);
                 fieldScans[i] = fieldScan;
             }
-            m_group.CopyFromComponentDataArray(fieldScans);
+
+            m_query.CopyFromComponentDataArray(fieldScans);
 
             fieldScans.Dispose();
             fieldBanishs.Dispose();
