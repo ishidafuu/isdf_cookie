@@ -14,9 +14,7 @@ namespace NKPB
 {
     public static class PieceEntityFactory
     {
-        public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager,
-            ref MeshMatList _meshMatList
-        )
+        public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager)
         {
             var archetype = _entityManager.CreateArchetype(ComponentTypes.PieceComponentType);
             var entity = _entityManager.CreateEntity(archetype);
@@ -24,7 +22,7 @@ namespace NKPB
             _entityManager.SetComponentData(entity, new PieceId
             {
                 fieldId = _fieldId,
-                    pieceId = _pieceId,
+                pieceId = _pieceId,
             });
 
             int gridPosX = _pieceId % Settings.Instance.Common.GridRowLength;
@@ -36,17 +34,17 @@ namespace NKPB
             _entityManager.SetComponentData(entity, new PiecePosition
             {
                 position = new Vector2Int(posX, posY),
-                    gridPosition = new Vector2Int(gridPosX, gridPosY)
+                gridPosition = new Vector2Int(gridPosX, gridPosY)
             });
 
             _entityManager.SetComponentData(entity, new PieceState
             {
                 type = EnumPieceType.Normal,
-                    color = (int)UnityEngine.Random.Range(0, Settings.Instance.Common.PieceColorCount),
+                color = (int)UnityEngine.Random.Range(0, Settings.Instance.Common.PieceColorCount),
             });
 
             // SharedComponentDataのセット
-            _entityManager.AddSharedComponentData(entity, _meshMatList);
+            // _entityManager.AddSharedComponentData(entity, _meshMatList);
 
             return entity;
         }

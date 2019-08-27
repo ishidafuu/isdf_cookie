@@ -23,9 +23,7 @@ namespace NKPB
         void Start()
         {
             // FireBaseManager.Init();
-
             Settings.Instance.SetPixelSize(Screen.width / m_pixelPerfectCamera.refResolutionX);
-
             var scene = SceneManager.GetActiveScene();
             if (scene.name != SCENE_NAME)
                 return;
@@ -50,7 +48,6 @@ namespace NKPB
             World[] worlds = new World[1];
             ref World world = ref worlds[0];
             world = new World(SCENE_NAME);
-            // World.Active
             World.Active = world;
 
             InitializationSystemGroup initializationSystemGroup = world.GetOrCreateSystem<InitializationSystemGroup>();
@@ -78,15 +75,11 @@ namespace NKPB
             simulationSystemGroup.SortSystemUpdateList();
             presentationSystemGroup.SortSystemUpdateList();
 
-            InitializeSystem(world);
+            // InitializeSystem(world);
+
             ScriptBehaviourUpdateOrder.UpdatePlayerLoop(world);
 
             return world.EntityManager;
-        }
-
-        void InitializeSystem(World world)
-        {
-
         }
 
         void ComponentCache()
@@ -111,7 +104,7 @@ namespace NKPB
         {
             for (int fieldId = 0; fieldId < Settings.Instance.Common.FieldCount; fieldId++)
             {
-                var fieldEntity = FieldEntityFactory.CreateEntity(fieldId, manager, ref Shared.puzzleMeshMat);
+                var fieldEntity = FieldEntityFactory.CreateEntity(fieldId, manager);
             }
         }
 
@@ -121,7 +114,7 @@ namespace NKPB
             {
                 for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
-                    var gridEntity = GridEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
+                    var gridEntity = GridEntityFactory.CreateEntity(fieldId, gridId, manager);
                 }
             }
         }
@@ -132,7 +125,7 @@ namespace NKPB
             {
                 for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
-                    var pieceEntity = PieceEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
+                    var pieceEntity = PieceEntityFactory.CreateEntity(fieldId, gridId, manager);
                 }
             }
         }
@@ -143,7 +136,7 @@ namespace NKPB
             {
                 for (int gridId = 0; gridId < Settings.Instance.Common.PieceCount; gridId++)
                 {
-                    var effectEntity = EffectEntityFactory.CreateEntity(fieldId, gridId, manager, ref Shared.puzzleMeshMat);
+                    var effectEntity = EffectEntityFactory.CreateEntity(fieldId, gridId, manager);
                 }
             }
         }

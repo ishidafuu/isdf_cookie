@@ -14,9 +14,7 @@ namespace NKPB
 {
     public static class GridEntityFactory
     {
-        public static Entity CreateEntity(int _fieldId, int _gridId, EntityManager _entityManager,
-            ref MeshMatList _meshMatList
-        )
+        public static Entity CreateEntity(int _fieldId, int _gridId, EntityManager _entityManager)
         {
             var archetype = _entityManager.CreateArchetype(ComponentTypes.GridComponentType);
             var entity = _entityManager.CreateEntity(archetype);
@@ -28,12 +26,12 @@ namespace NKPB
             _entityManager.SetComponentData(entity, new GridState
             {
                 gridId = _gridId,
-                    fieldId = _fieldId,
-                    // position = new Vector2Int(posX, posY),
-                    pieceId = _gridId
+                fieldId = _fieldId,
+                // position = new Vector2Int(posX, posY),
+                pieceId = _gridId
             });
             // SharedComponentDataのセット
-            _entityManager.AddSharedComponentData(entity, _meshMatList);
+            // _entityManager.AddSharedComponentData(entity, _meshMatList);
 
             return entity;
         }

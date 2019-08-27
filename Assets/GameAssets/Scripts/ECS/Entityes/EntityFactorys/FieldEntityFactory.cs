@@ -14,9 +14,7 @@ namespace NKPB
 {
     public static class FieldEntityFactory
     {
-        public static Entity CreateEntity(int _i, EntityManager _entityManager,
-            ref MeshMatList _meshMatList
-        )
+        public static Entity CreateEntity(int _i, EntityManager _entityManager)
         {
             var archetype = _entityManager.CreateArchetype(ComponentTypes.FieldComponentType);
             var entity = _entityManager.CreateEntity(archetype);
@@ -30,10 +28,10 @@ namespace NKPB
             _entityManager.SetComponentData(entity, new FieldBanish
             {
                 phase = EnumBanishPhase.None,
-                    count = 0,
+                count = 0,
             });
 
-            _entityManager.AddSharedComponentData(entity, _meshMatList);
+            // _entityManager.AddSharedComponentData(entity, _meshMatList);
 
             return entity;
         }

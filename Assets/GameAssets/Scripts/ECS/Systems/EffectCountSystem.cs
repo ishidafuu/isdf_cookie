@@ -34,6 +34,7 @@ namespace NKPB
             };
             inputDeps = job.Schedule(inputDeps);
             inputDeps.Complete();
+
             m_query.CopyFromComponentDataArray(job.effectStates);
 
             effectStates.Dispose();

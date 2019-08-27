@@ -15,9 +15,7 @@ namespace NKPB
     public static class EffectEntityFactory
     {
 
-        public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager,
-            ref MeshMatList _meshMatList
-        )
+        public static Entity CreateEntity(int _fieldId, int _pieceId, EntityManager _entityManager)
         {
             var archetype = _entityManager.CreateArchetype(ComponentTypes.EffectComponentType);
             var entity = _entityManager.CreateEntity(archetype);
@@ -28,7 +26,7 @@ namespace NKPB
             });
 
             // SharedComponentDataのセット
-            _entityManager.AddSharedComponentData(entity, _meshMatList);
+            // _entityManager.AddSharedComponentData(entity, _meshMatList);
 
             return entity;
         }
